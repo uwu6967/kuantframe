@@ -61,8 +61,8 @@ async fn init_database(use_debug: bool) -> Result<(), Error> {
     // Create the database connection and store it
     let storage_path = helper::get_app_storage_path();
 
-    let mut file_name = "quantframeV2.sqlite";
-    let debug_file_name = "quantframeV2_debug.sqlite";
+    let mut file_name = "kuantframeV2.sqlite";
+    let debug_file_name = "kuantframeV2_debug.sqlite";
 
     // Create the path to the database file
     let file_path = format!("{}/{}", storage_path.to_str().unwrap(), file_name);
@@ -149,7 +149,7 @@ pub fn run() {
     let use_temp_db: bool = std::env::args().any(|a| a == "--use-temp-db");
 
     println!(
-        "Starting Quantframe...{:?}",
+        "Starting Kuantframe...{:?}",
         std::env::args().collect::<Vec<String>>()
     );
 
@@ -185,7 +185,7 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("main") {
                 let version = app.package_info().version.to_string();
                 let name = app.package_info().name.as_str();
-                let _ = window.set_title(&format!("{name} v{version} - By Kenya-DK"));
+                let _ = window.set_title(&format!("{name} v{version}"));
             }
             // Clone the handle for async task
             let app_handle = app.handle().clone();

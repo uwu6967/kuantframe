@@ -1,0 +1,14 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "C:/Users/pus/AppData/Local/dev.kuantframe",
+      "name": "kuantframe-appdata"
+    }
+  ],
+  "settings": {
+    "cssVariables.lookupFiles": ["**/*.css", "**/*.scss", "**/*.sass", "**/*.less", "node_modules/@mantine/core/styles.css"]
+  }
+}

@@ -14,7 +14,7 @@ use service::{StockItemQuery, StockRivenQuery, TransactionQuery, WishListQuery};
 use tokio::time::timeout;
 
 async fn get_connection() -> DatabaseConnection {
-    let debug_file_name = "quantframeV2_debug.sqlite";
+    let debug_file_name = "kuantframeV2_debug.sqlite";
     // Create the database connection URL
     let db_url = format!("sqlite://{}?mode=rwc", debug_file_name,);
 

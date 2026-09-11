@@ -99,7 +99,7 @@ export function Logo({ color }: { color: string }) {
         </Text>
       )}
       <Text size={"md"} fw={500} data-color="gold" data-color-mode="shine">
-        [CAT]
+        [KU]
       </Text>
     </Group>
   );

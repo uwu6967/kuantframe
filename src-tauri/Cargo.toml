@@ -1,10 +1,10 @@
 [package]
-name = "Quantframe"
+name = "Kuantframe"
 version = "1.6.28"
-description = "Quantframe"
+description = "Kuantframe — a visual fork of Quantframe"
 authors = ["Kenya-DK"]
-license = ""
-repository = "https://github.com/Kenya-DK/quantframe-react"
+license = "GPL-3.0-only"
+repository = "https://github.com/uwu6967/kuantframe"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

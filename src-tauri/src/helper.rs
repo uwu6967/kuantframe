@@ -24,7 +24,7 @@ use crate::{
     APP, DATABASE,
 };
 
-pub static APP_PATH: &str = "dev.kenya.quantframe";
+pub static APP_PATH: &str = "dev.kuantframe";
 
 pub fn get_device_id() -> String {
     let app = APP.get().unwrap();

@@ -2051,7 +2051,7 @@
       "text": {
         "version": "Version: <blue>{{version}}</blue>  Made with ❤️ in 🇩🇰. © 2023-{{year}} Kenya-DK. All rights reserved ",
         "patreon_thanks": " A special thanks to the Patreon 'Quantframe Users' supporters for making Quantframe possible: <blue>{{users}}</blue>.",
-        "disclaimer": "Quantframe is a third-party app and is not affiliated with Digital Extremes."
+        "disclaimer": "Kuantframe is a personal fork of Quantframe, a third-party app not affiliated with Digital Extremes."
       },
       "button_check_for_updates": "Check for Updates"
     },
@@ -2100,7 +2100,7 @@
         },
         "debugging": {
           "title": "Debugging",
-          "fake_orders_tooltip": "Toggle Fake Orders for Live Trading (For Testing Purposes Only) will be stored in dev.kenya.quantframe\\fake_orders",
+          "fake_orders_tooltip": "Toggle Fake Orders for Live Trading (For Testing Purposes Only) will be stored in dev.kuantframe\\fake_orders",
           "fake_orders_label": "Use Fake Orders Live orders",
           "datatable": {
             "columns": {
