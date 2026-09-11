@@ -11,6 +11,15 @@ Personal GPL-3.0 fork of [Quantframe](https://github.com/Kenya-DK/quantframe-rea
 
 Login, prices, and cache still use `https://api.quantframe.app`.
 
+## Download (Windows)
+
+Grab the latest installer from **[Releases](https://github.com/uwu6967/kuantframe/releases)**:
+
+- **`Kuantframe_*_x64-setup.exe`** — NSIS installer (recommended)
+- **`Kuantframe_*_x64_en-US.msi`** — MSI installer
+
+Windows may warn that the app is unsigned; that is expected for this personal fork. Prefer the `.exe` setup unless you specifically want MSI.
+
 ## What's different in this fork
 
 - Gzip / deflate HTTP compression and reused `reqwest` clients
