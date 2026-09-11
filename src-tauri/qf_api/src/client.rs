@@ -50,8 +50,8 @@ impl InsertAt for String {
 }
 
 const REQUESTS_PER_SECOND: NonZeroU32 = NonZero::new(3).unwrap();
-const DEVELOPMENT_URL: &str = "https://api.quantframe.app";
-const PRODUCTION_URL: &str = "https://api.quantframe.app";
+// Kuantframe always uses the public Quantframe API — never localhost (no local API server).
+const API_BASE_URL: &str = "https://api.quantframe.app";
 // Callback types
 pub type ClientCallback = Box<dyn Fn(&str, &Value) + Send + Sync>;
 #[derive(Clone)]
@@ -184,12 +184,7 @@ impl Client {
         headers: Option<HashMap<String, String>>,
         response_format: ResponseFormat,
     ) -> Result<(ApiResponse<T>, HeaderMap, RequestError), ApiError> {
-        let url = if self.is_development {
-            format!("{}{}", DEVELOPMENT_URL, path)
-        } else {
-            format!("{}{}", PRODUCTION_URL, path)
-        };
-        // let url = format!("{}{}", "http://localhost:6969", path);
+        let url = format!("{}{}", API_BASE_URL, path);
         let mut default_headers = reqwest::header::HeaderMap::new();
 
         // Create the error object for logging
