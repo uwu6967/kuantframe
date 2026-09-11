@@ -22,13 +22,21 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.cursor/
 
 __trace/
 
-
 # Added by cargo
-
 **/target
-
 build/
 .pnpm-store
+
+# Never commit personal Quantframe/Kuantframe runtime data
+settings.json
+auth.json
+cache_version.json
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+**/dev.kuantframe/**
+**/dev.kenya.quantframe/**

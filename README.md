@@ -18,6 +18,8 @@ Grab the latest installer from **[Releases](https://github.com/uwu6967/kuantfram
 - **`Kuantframe_*_x64-setup.exe`** — NSIS installer (recommended)
 - **`Kuantframe_*_x64_en-US.msi`** — MSI installer
 
+The GitHub download is a **blank slate**: no login, no stock/items, no trading settings, no webhooks. First launch creates empty defaults under `%LOCALAPPDATA%\dev.kuantframe`. Your local Quantframe/Kuantframe data is never packaged into the installer.
+
 Windows may warn that the app is unsigned; that is expected for this personal fork. Prefer the `.exe` setup unless you specifically want MSI.
 
 ## What's different in this fork
