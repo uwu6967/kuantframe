@@ -22,13 +22,34 @@ The GitHub download is a **blank slate**: no login, no stock/items, no trading s
 
 Windows may warn that the app is unsigned; that is expected for this personal fork. Prefer the `.exe` setup unless you specifically want MSI.
 
-## What's different in this fork
+## Changelog (Kuantframe-specific)
 
-- Gzip / deflate HTTP compression and reused `reqwest` clients
-- Live **Last Transaction** refresh with Sold / Bought / Profit
-- WTB **min buy % of lowest sell** floor (`min_buy_percent_of_sell`)
-- Bundled **Catppuccin Mocha** theme preset
-- `tauri:dev` always hits the production Quantframe API (no `localhost:6969`)
+Everything below is on top of upstream Quantframe **v1.6.28**. Credits go to the original authors where we ported their work.
+
+### From community / upstream
+
+| Change | Source |
+|--|--|
+| Enable **gzip + deflate** on `reqwest` (smaller market/API responses) | Ported from [Asomoth PR #125](https://github.com/Kenya-DK/quantframe-react/pull/125) |
+| **Reuse one `reqwest::Client`** for QF API, Discord, and webhook calls (less TLS overhead) | Ported from [bxn-dev PR #127](https://github.com/Kenya-DK/quantframe-react/pull/127) |
+| Bundled **Catppuccin Mocha** theme preset (Appearance → Theme) | Theme JSON from [NakedTrashPanda/Quantframe-Catppuccin-Theme](https://github.com/NakedTrashPanda/Quantframe-Catppuccin-Theme); wired in as a built-in preset |
+| WTB **min buy % of lowest sell** (`min_buy_percent_of_sell`, default `-1` = off) | Implemented for [upstream issue #109](https://github.com/Kenya-DK/quantframe-react/issues/109) (Hit2Skill / Rubinlord) |
+
+### Original to this fork
+
+| Change | Notes |
+|--|--|
+| **Rebrand as Kuantframe** | Separate window name, `dev.kuantframe` AppData, `kuantframeV2.sqlite`, `[KU]` tag; official auto-updater disabled so Kenya-DK’s installer cannot overwrite this build |
+| **Last Transaction** live refresh | Emits `Transaction:RefreshTransactions` after each successful trade; home row shows Sold / Bought / Profit (older sales fall back when purchase price was not stored) |
+| **`tauri:dev` → production API** | Dev builds always call `https://api.quantframe.app` (never `localhost:6969`), so login/cache/alerts work without a local API server |
+| **Windows installers on GitHub Releases** | NSIS `.exe` + MSI; blank-slate packages (no personal settings, stock, auth, or webhooks) |
+| **Windows-only release workflow** | `.github/workflows/build.yml` builds installers on `v*` tags without requiring Tauri signing secrets |
+
+### Still upstream (not changed)
+
+Login, prices, item cache, and Quantframe cloud features still use Kenya-DK’s backend at `https://api.quantframe.app`.
+
+Base app remains GPL-3.0 Quantframe by [Kenya-DK](https://github.com/Kenya-DK/quantframe-react).
 
 ## Run from source (Windows)
 
