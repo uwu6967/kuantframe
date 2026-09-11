@@ -1,3 +1,40 @@
 .root {
-  border: 1px solid var(--mantine-color-dark-3)
+  border: 1px solid var(--mantine-color-dark-3);
+}
+
+.name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.metrics {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 44px;
+}
+
+.label {
+  font-size: 10px;
+  line-height: 1.1;
+  color: var(--mantine-color-dark-1);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.date {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }

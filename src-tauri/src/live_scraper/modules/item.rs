@@ -447,6 +447,23 @@ impl ItemModule {
             trade_operations.add(reason);
         }
 
+        // Floor buy price at X% of the lowest live sell offer (issue #109).
+        let min_buy_percent_of_sell = settings.wtb.min_buy_percent_of_sell;
+        if !is_disabled(min_buy_percent_of_sell) {
+            let lowest_sell = entry.sell_market_info.lowest_price;
+            if lowest_sell > 0 && min_buy_percent_of_sell > 0 {
+                let floor = (lowest_sell * min_buy_percent_of_sell + 99) / 100;
+                if post_price < floor {
+                    post_price = floor;
+                    trade_operations.add("MinBuyPercentOfSell");
+                    log(&format!(
+                        "Item {} buy floor raised to {} ({}% of lowest sell {}).",
+                        item_info.name, post_price, min_buy_percent_of_sell, lowest_sell
+                    ));
+                }
+            }
+        }
+
         // How far above (positive) or below (negative) our post price is from the market average.
         // Used to gauge whether we're overpaying relative to recent trades.
         let closed_avg_metric = closed_avg as i64 - post_price;

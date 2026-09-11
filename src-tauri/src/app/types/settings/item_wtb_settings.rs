@@ -10,10 +10,17 @@ pub struct ItemWtbSettings {
     pub price_shift_threshold: i64,
     pub buy_quantity: i64,
     pub min_wtb_profit_margin: i64,
+    /// Floor buy offers at this percent of the lowest live sell offer. -1 disables.
+    #[serde(default = "default_min_buy_percent_of_sell")]
+    pub min_buy_percent_of_sell: i64,
     pub quantity_per_trade: i64,
     pub max_stock_quantity: i64,
     pub max_price_drop: i64,
     pub min_listings_below: i64,
+}
+
+fn default_min_buy_percent_of_sell() -> i64 {
+    -1
 }
 
 impl Default for ItemWtbSettings {
@@ -27,6 +34,7 @@ impl Default for ItemWtbSettings {
             max_total_price_cap: 100000,
             price_shift_threshold: -1,
             min_wtb_profit_margin: -1,
+            min_buy_percent_of_sell: -1,
             quantity_per_trade: 1,
             max_stock_quantity: -1,
             max_price_drop: -1,

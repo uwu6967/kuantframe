@@ -146,12 +146,6 @@ export namespace TauriTypes {
     min_listings_below: number;
   }
   export interface ItemWtbSettings {
-    min_sma: number;
-    min_profit: number;
-    max_price_drop: number;
-    min_listings_below: number;
-  }
-  export interface ItemWtsSettings {
     volume_threshold: number;
     profit_threshold: number;
     avg_price_cap: number;
@@ -160,8 +154,16 @@ export namespace TauriTypes {
     price_shift_threshold: number;
     buy_quantity: number;
     min_wtb_profit_margin: number;
+    /** Floor buy offers at this percent of the lowest live sell. -1 disables. */
+    min_buy_percent_of_sell: number;
     quantity_per_trade: number;
     max_stock_quantity: number;
+    max_price_drop: number;
+    min_listings_below: number;
+  }
+  export interface ItemWtsSettings {
+    min_sma: number;
+    min_profit: number;
     max_price_drop: number;
     min_listings_below: number;
   }

@@ -2,7 +2,7 @@ import { TauriTypes } from "$types";
 import api from "@api/index";
 import { ThemePreview } from "@components/DataDisplay/ThemePreview";
 import { LiveThemeEditor } from "@components/ThemeEditor";
-import { defaultTheme } from "@contexts/static";
+import { catppuccinMochaTheme, defaultTheme } from "@contexts/static";
 import { useTheme } from "@contexts/theme.context";
 import { useTranslateForms } from "@hooks/useTranslate.hook";
 import { Box, Flex, Group, Text, Title } from "@mantine/core";
@@ -10,6 +10,9 @@ export type ThemePanelProps = {
   value: TauriTypes.Settings;
   onSubmit: (value: TauriTypes.Settings) => void;
 };
+
+const BUNDLED_THEMES = [defaultTheme, catppuccinMochaTheme];
+
 export const ThemePanel = ({}: ThemePanelProps) => {
   const { switchTheme } = useTheme();
 
@@ -26,13 +29,16 @@ export const ThemePanel = ({}: ThemePanelProps) => {
         </Text>
       </Group>
       <Flex p={"md"} gap="sm" justify="flex-start" align="flex-start" direction="row" wrap="wrap">
-        <ThemePreview
-          icon={defaultTheme.iconBase64}
-          theme={defaultTheme.properties}
-          name={defaultTheme.name}
-          author={defaultTheme.author}
-          onClick={() => switchTheme(defaultTheme.properties)}
-        />
+        {BUNDLED_THEMES.map((theme) => (
+          <ThemePreview
+            key={theme.name}
+            icon={theme.iconBase64}
+            theme={theme.properties}
+            name={theme.name}
+            author={theme.author}
+            onClick={() => switchTheme(theme.properties)}
+          />
+        ))}
         {data?.map((theme, i) => (
           <ThemePreview
             key={i}

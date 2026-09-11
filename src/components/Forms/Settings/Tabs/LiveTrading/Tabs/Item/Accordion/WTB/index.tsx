@@ -73,6 +73,20 @@ export const WTBItemAccordion = ({ form }: WTBItemAccordionProps) => {
           radius="md"
           {...form.getInputProps(getFieldPath("min_wtb_profit_margin"))}
         />
+        <NumberInput
+          label={useTranslateFormFields("min_buy_percent_of_sell.label")}
+          min={-1}
+          max={100}
+          placeholder={useTranslateFormFields("min_buy_percent_of_sell.placeholder")}
+          rightSection={
+            <TooltipIcon
+              label={useTranslateFormFields("min_buy_percent_of_sell.tooltip")}
+              link={useTranslateFormFields("min_buy_percent_of_sell.link")}
+            />
+          }
+          radius="md"
+          {...form.getInputProps(getFieldPath("min_buy_percent_of_sell"))}
+        />
       </Group>
       <Group gap={"md"}>
         <NumberInput

@@ -24,11 +24,7 @@ export default function HomePage() {
   const useTranslateCards = (key: string, context?: { [key: string]: any }, i18Key?: boolean) => useTranslate(`cards.${key}`, { ...context }, i18Key);
 
   const { data: summary, refetch: refetchSummary } = api.dashboard.summary();
-  const handleRefresh = (_data: any) => {
-    refetchSummary();
-  };
-  // Use the custom hook for Tauri events
-  useTauriEvent(TauriTypes.Events.RefreshTransactions, handleRefresh, []);
+  useTauriEvent(TauriTypes.Events.RefreshTransactions, () => refetchSummary(), [refetchSummary]);
   return (
     <Container size={"100%"}>
       <Grid className={classes.wrapper} data-has-alert={useHasAlert()}>
@@ -167,8 +163,8 @@ export default function HomePage() {
             </Group>
             <Divider />
             <ScrollArea className={classes.transactions} p={10} data-has-alert={useHasAlert()}>
-              {summary?.resent_transactions.map((transaction, index) => (
-                <TransactionListItem key={index} transaction={transaction} />
+              {summary?.resent_transactions.map((transaction) => (
+                <TransactionListItem key={transaction.id} transaction={transaction} />
               ))}
             </ScrollArea>
           </Paper>

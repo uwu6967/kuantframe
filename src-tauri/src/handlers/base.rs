@@ -3,12 +3,15 @@ use entity::{
     transaction::TransactionPaginationQueryDto, wish_list::CreateWishListItem,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Map, Value};
 use service::{TransactionMutation, TransactionQuery};
 use utils::SubType;
 use utils::{get_location, info, Error, OperationSet, SortDirection};
 use wf_market::{enums::OrderType, types::UpdateOrderParams};
 
 use crate::{
+    send_event,
+    types::UIEvent,
     utils::{modules::states, ErrorFromExt, SubTypeExt},
     DATABASE,
 };
@@ -168,15 +171,19 @@ pub async fn handle_transaction(
         )
         .await?;
         if let Some(purchase_transaction) = existing_transaction.results.first() {
-            let purchase_price_per_unit =
-                purchase_transaction.price / purchase_transaction.quantity;
+            if purchase_transaction.quantity != 0 && transaction.quantity != 0 {
+                let purchase_price_per_unit =
+                    purchase_transaction.price / purchase_transaction.quantity;
 
-            let sold_price_per_unit = transaction.price / transaction.quantity;
+                let sold_price_per_unit = transaction.price / transaction.quantity;
 
-            let total_profit =
-                (sold_price_per_unit - purchase_price_per_unit) * transaction.quantity;
+                let total_profit =
+                    (sold_price_per_unit - purchase_price_per_unit) * transaction.quantity;
+                let purchase_total = purchase_price_per_unit * transaction.quantity;
 
-            transaction.set_profit(total_profit);
+                transaction.set_profit(total_profit);
+                set_purchase_price(&mut transaction, purchase_total, purchase_price_per_unit);
+            }
         }
         // Overall credits calculation
         transaction.set_credits(transaction.price * crate::enums::TradeItemType::Platinum.to_tax());
@@ -202,7 +209,38 @@ pub async fn handle_transaction(
             .with_timezone(&chrono::Utc);
     }
     match TransactionMutation::create(conn, &transaction, use_current_date).await {
-        Ok(updated_item) => Ok(updated_item),
-        Err(e) => return Err(e.with_location(get_location!()).log(file)),
+        Ok(updated_item) => {
+            send_event!(
+                UIEvent::RefreshTransactions,
+                json!({"id": updated_item.id, "source": "HandleTransaction"})
+            );
+            Ok(updated_item)
+        }
+        Err(e) => Err(e.with_location(get_location!()).log(file)),
+    }
+}
+
+fn set_purchase_price(
+    transaction: &mut entity::transaction::Model,
+    purchase_total: i64,
+    purchase_price_per_unit: i64,
+) {
+    match &mut transaction.properties {
+        Some(Value::Object(map)) => {
+            map.insert("purchase_price".to_string(), json!(purchase_total));
+            map.insert(
+                "purchase_price_per_unit".to_string(),
+                json!(purchase_price_per_unit),
+            );
+        }
+        _ => {
+            let mut map = Map::new();
+            map.insert("purchase_price".to_string(), json!(purchase_total));
+            map.insert(
+                "purchase_price_per_unit".to_string(),
+                json!(purchase_price_per_unit),
+            );
+            transaction.properties = Some(Value::Object(map));
+        }
     }
 }

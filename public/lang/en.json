@@ -663,6 +663,11 @@
         "become_a_patron": "Become a Patron"
       }
     },
+    "transaction_list_item": {
+      "sold": "Sold",
+      "bought": "Bought",
+      "profit": "Profit"
+    },
     "timer_stamp": {
       "years": "{{years}} years ago",
       "months": "{{months}} months ago",
@@ -1398,6 +1403,13 @@
                     "error": "Invalid profit margin threshold",
                     "tooltip": "Minimum profit margin for WTB trades",
                     "link": "https://quantframe.app/features/live-trading/settings/item/wtb#profit-margin-threshold"
+                  },
+                  "min_buy_percent_of_sell": {
+                    "label": "Min Buy % of Lowest Sell",
+                    "placeholder": "Min Buy % of Lowest Sell",
+                    "error": "Invalid min buy percent of sell",
+                    "tooltip": "Floor your buy offer at this percent of the lowest live sell offer. Example: lowest sell 100 and 60% → never bid below 60. Set -1 to disable.",
+                    "link": "https://github.com/Kenya-DK/quantframe-react/issues/109"
                   },
                   "quantity_per_trade": {
                     "label": "Quantity Per Trade",
