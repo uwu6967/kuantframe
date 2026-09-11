@@ -18,6 +18,10 @@ Grab the latest installer from **[Releases](https://github.com/uwu6967/kuantfram
 - **`Kuantframe_*_x64-setup.exe`** — NSIS installer (recommended)
 - **`Kuantframe_*_x64_en-US.msi`** — MSI installer
 
+Install with the setup file, then start **Kuantframe** from the Start Menu / Desktop shortcut.
+
+Do **not** open `src-tauri\target\debug\Kuantframe.exe` from the repo. That debug binary expects Vite at `http://localhost:1420` and will show **“localhost refused to connect”** / a blank window if you double-click it. The GitHub installer is a standalone release build with the UI bundled in.
+
 The GitHub download is a **blank slate**: no login, no stock/items, no trading settings, no webhooks. First launch creates empty defaults under `%LOCALAPPDATA%\dev.kuantframe`. Your local Quantframe/Kuantframe data is never packaged into the installer.
 
 Windows may warn that the app is unsigned; that is expected for this personal fork. Prefer the `.exe` setup unless you specifically want MSI.
@@ -44,6 +48,7 @@ Everything below is on top of upstream Quantframe **v1.6.28**. Credits go to the
 | **`tauri:dev` → production API** | Dev builds always call `https://api.quantframe.app` (never `localhost:6969`), so login/cache/alerts work without a local API server |
 | **Windows installers on GitHub Releases** | NSIS `.exe` + MSI; blank-slate packages (no personal settings, stock, auth, or webhooks) |
 | **Windows-only release workflow** | `.github/workflows/build.yml` builds installers on `v*` tags without requiring Tauri signing secrets |
+| **`tauri:build` = release** | Package script no longer defaults to `--debug`, so local/CI installers embed the UI instead of pointing at localhost Vite |
 
 ### Still upstream (not changed)
 
@@ -61,6 +66,16 @@ cd kuantframe
 pnpm i
 pnpm run tauri:dev
 ```
+
+Always start with `pnpm run tauri:dev` (starts Vite + the app together). Do not double-click `target\debug\Kuantframe.exe`.
+
+To make a standalone installer locally (same kind as GitHub Releases):
+
+```powershell
+pnpm run tauri:build
+```
+
+Outputs land in `src-tauri\target\release\bundle\nsis\` and `...\msi\`.
 
 First build can take a few minutes; later starts are faster. Keep official Quantframe closed if both would share the same WFM session.
 
