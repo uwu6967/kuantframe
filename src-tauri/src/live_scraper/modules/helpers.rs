@@ -172,6 +172,10 @@ pub fn get_interesting_items(settings: &ItemSettings) -> Vec<ItemPriceInfo> {
     items
 }
 
+/// 0/1 knapsack over buy orders: `(platinum, potential_profit, wfm_id, order_id)`.
+///
+/// Returns `(selected, unselected)` in the original order. Only entries with a strictly
+/// positive value can be selected (the DP never picks a zero/negative-profit order).
 pub fn knapsack(
     items: Vec<(i64, f64, String, String)>,
     max_weight: i64,
@@ -179,41 +183,63 @@ pub fn knapsack(
     Vec<(i64, f64, String, String)>,
     Vec<(i64, f64, String, String)>,
 ) {
+    let w_max = usize::try_from(max_weight).unwrap_or(0);
+
+    // Fast path: when every order fits under the cap together there is no trade-off to
+    // solve, so skip the O(n * cap) table entirely. This is the common case while the
+    // total platinum on WTB orders stays below `max_total_price_cap`, and it mirrors the
+    // DP exactly: an order is kept iff its weight is valid and its value is > 0.
+    let total_weight: i64 = items.iter().map(|item| item.0.max(0)).sum();
+    if total_weight <= max_weight {
+        return items
+            .into_iter()
+            .partition(|item| item.0 >= 0 && item.1 > 0.0);
+    }
+
+    // Weight of an order, or None when it can never be chosen (negative or above the cap).
+    let weight_of = |item: &(i64, f64, String, String)| -> Option<usize> {
+        usize::try_from(item.0).ok().filter(|&w| w <= w_max)
+    };
+
     let n = items.len();
-    let w_max = max_weight as usize;
+    let stride = w_max + 1;
 
     // dp[w] = best value achievable with capacity w
-    let mut dp = vec![0.0; w_max + 1];
+    let mut dp = vec![0.0_f64; stride];
 
-    // choice[i][w] = true if item i is chosen when capacity is w
-    let mut choice = vec![vec![false; w_max + 1]; n];
+    // choice[i * stride + w] = true if item i is chosen when capacity is w.
+    // One flat allocation instead of `n` separate rows.
+    let mut choice = vec![false; n * stride];
 
     for (i, item) in items.iter().enumerate() {
-        let weight = item.0 as usize;
+        let Some(weight) = weight_of(item) else {
+            continue;
+        };
         let value = item.1;
+        let row = i * stride;
 
         // iterate backwards for 1D DP
         for w in (weight..=w_max).rev() {
             let new_val = dp[w - weight] + value;
             if new_val > dp[w] {
                 dp[w] = new_val;
-                choice[i][w] = true;
+                choice[row + w] = true;
             }
         }
     }
 
     // reconstruct chosen items
-    let mut selected_items = Vec::new();
+    let mut selected_items = Vec::with_capacity(n);
     let mut unselected_items = Vec::new();
     let mut w = w_max;
 
-    for i in (0..n).rev() {
-        let weight = items[i].0 as usize;
-        if w >= weight && choice[i][w] {
-            selected_items.push(items[i].clone());
-            w -= weight;
-        } else {
-            unselected_items.push(items[i].clone());
+    for (i, item) in items.into_iter().enumerate().rev() {
+        match weight_of(&item) {
+            Some(weight) if w >= weight && choice[i * stride + w] => {
+                selected_items.push(item);
+                w -= weight;
+            }
+            _ => unselected_items.push(item),
         }
     }
 

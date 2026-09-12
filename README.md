@@ -50,6 +50,15 @@ Everything below is on top of upstream Quantframe **v1.6.28**. Credits go to the
 | **Windows-only release workflow** | `.github/workflows/build.yml` builds installers on `v*` tags without requiring Tauri signing secrets |
 | **`tauri:build` = release** | Package script no longer defaults to `--debug`, so local/CI installers embed the UI instead of pointing at localhost Vite |
 
+### Live scraper hot-loop optimizations
+
+| Change | Notes |
+|--|--|
+| **Indexed item-price cache** | `ItemPriceModule::find_by` / `find_by_id` are O(1) `HashMap` lookups keyed by `(url or id, sub_type)`. Previously every lookup deep-cloned all ~1,500 price rows (each with strings + JSON properties) and then scanned them — once per item per scraper cycle, plus once per order in `apply_trade_info`. `get_by_filter` now filters under the lock and clones only matches |
+| **No per-item `AppState` clones** | `progress_buying` / `progress_selling` / `progress_wish_list` / `progress_syndicate` take the cycle-start `&AppState` from `check()` instead of calling `states::get_settings()` + `states::app_state()` for every item. Each of those locked the global `Mutex<AppState>` and deep-cloned settings, user and both API clients (2–3× per item). Fewer lock acquisitions also means fewer UI stalls while the scraper runs. Settings are now consistent for a whole cycle |
+| **Knapsack fast path** | `knapsack()` returns immediately (O(n)) when all buy orders already fit under `max_total_price_cap` — the common case — instead of building an O(n × cap) table. When the DP is needed, the choice matrix is one flat allocation instead of `n` separate rows. Verified equivalent to the original on 4,000 randomized cases including zero/negative profit and over-cap prices |
+| **Alerts keep-alive interval cleanup** | `app.context.tsx` now clears its 10-minute `setInterval` on unmount instead of leaking it |
+
 ### Still upstream (not changed)
 
 Login, prices, item cache, and Quantframe cloud features still use Kenya-DK’s backend at `https://api.quantframe.app`.

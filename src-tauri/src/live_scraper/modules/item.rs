@@ -233,7 +233,7 @@ impl ItemModule {
 
             if item_entry.operations.has("Buy") && !item_entry.operations.has("WishList") {
                 if let Err(e) = self
-                    .progress_buying(&item_info, item_entry, &item_price, &orders)
+                    .progress_buying(app, &item_info, item_entry, &item_price, &orders)
                     .await
                 {
                     return Err(e.with_location(get_location!()));
@@ -252,7 +252,7 @@ impl ItemModule {
             // Process wishlist logic (future expansion)
             if item_entry.operations.has(&"WishList".to_string()) {
                 if let Err(e) = self
-                    .progress_wish_list(&item_info, item_entry, &item_price, &orders)
+                    .progress_wish_list(app, &item_info, item_entry, &item_price, &orders)
                     .await
                 {
                     return Err(e.with_location(get_location!()));
@@ -271,7 +271,7 @@ impl ItemModule {
             // Process selling logic (future expansion)
             if item_entry.operations.has("Sell") && item_entry.stock_id.is_some() {
                 if let Err(e) = self
-                    .progress_selling(&item_info, item_entry, &item_price, &orders)
+                    .progress_selling(app, &item_info, item_entry, &item_price, &orders)
                     .await
                 {
                     return Err(e.with_location(get_location!()));
@@ -290,7 +290,7 @@ impl ItemModule {
             // Process syndicate logic (future expansion) DISABLED FOR NOW WIP
             if item_entry.operations.has("Syndicate") {
                 // if let Err(e) = self
-                //     .progress_syndicate(&item_info, item_entry, &item_price, &orders)
+                //     .progress_syndicate(app, &item_info, item_entry, &item_price, &orders)
                 //     .await
                 // {
                 //     return Err(e.with_location(get_location!()));
@@ -349,8 +349,12 @@ impl ItemModule {
     }
 
     /// Progresses the buying workflow for a single item.
+    ///
+    /// `app` is the cycle-start snapshot from `check()`. Reusing it avoids locking and
+    /// deep-cloning `AppState` (settings, user, both API clients) for every item.
     pub async fn progress_buying(
         &self,
+        app: &AppState,
         item_info: &CacheTradableItem,
         entry: &mut ItemEntry,
         price: &ItemPriceInfo,
@@ -359,21 +363,21 @@ impl ItemModule {
         let conn = DATABASE.get().unwrap();
         let log_options = &LoggerOptions::default().set_enable(true);
         let component = comp("Buying");
-        let settings = states::get_settings()?.live_scraper.items;
+        let settings = &app.settings.live_scraper.items;
 
         // Helper function to log messages with the component prefix
         let log = |msg: &str| info(&component, msg, &log_options);
 
         // Skip if item is blacklisted for buying
-        if is_blacklisted(&settings, item_info, entry, &TradeMode::Buy) {
+        if is_blacklisted(settings, item_info, entry, &TradeMode::Buy) {
             log(&format!(
                 "Item {} is blacklisted for buying. Skipping.",
                 item_info.name
             ));
             return Ok(());
         }
-        // Get the Warframe Market client from the application state
-        let wfm_client = states::app_state()?.wfm_client;
+        // Warframe Market client (shares the live order cache with the app state)
+        let wfm_client = &app.wfm_client;
 
         // Get the per-trade quantity for this item, based on its type and settings
         let per_trade = get_per_trade(item_info);
@@ -414,13 +418,7 @@ impl ItemModule {
                     "Item {} already has {} units in stock (max: {}). Skipping WTB order creation.",
                     item_info.name, stock_item.owned, max_stock_quantity
                 ));
-                if let Err(e) = delete_order(
-                    &component,
-                    entry,
-                    OrderType::Buy,
-                    &states::app_state()?.wfm_client,
-                )
-                .await
+                if let Err(e) = delete_order(&component, entry, OrderType::Buy, wfm_client).await
                 {
                     return Err(e
                         .with_location(get_location!())
@@ -626,6 +624,7 @@ impl ItemModule {
     /// Progresses the selling workflow for a single item.
     pub async fn progress_selling(
         &self,
+        app: &AppState,
         item_info: &CacheTradableItem,
         entry: &mut ItemEntry,
         price: &ItemPriceInfo,
@@ -634,12 +633,12 @@ impl ItemModule {
         let conn = DATABASE.get().unwrap();
         let log_options = &LoggerOptions::default();
         let component = comp("Selling");
-        let settings = states::get_settings()?.live_scraper.items;
+        let settings = &app.settings.live_scraper.items;
 
         let log = |msg: &str| info(&component, msg, &log_options);
 
         // Skip if item is blacklisted for selling
-        if is_blacklisted(&settings, item_info, entry, &TradeMode::Sell) {
+        if is_blacklisted(settings, item_info, entry, &TradeMode::Sell) {
             log(&format!(
                 "Item {} is blacklisted for selling. Skipping.",
                 item_info.name
@@ -647,8 +646,8 @@ impl ItemModule {
             return Ok(());
         }
 
-        // Get the Warframe Market client from the application state
-        let wfm_client = states::app_state()?.wfm_client;
+        // Warframe Market client (shares the live order cache with the app state)
+        let wfm_client = &app.wfm_client;
 
         // Get the per-trade quantity for this item, based on its type and settings
         let per_trade = get_per_trade(item_info);
@@ -878,6 +877,7 @@ impl ItemModule {
     /// Progresses the wishlist workflow for a single item.
     pub async fn progress_wish_list(
         &self,
+        app: &AppState,
         item_info: &CacheTradableItem,
         entry: &mut ItemEntry,
         price: &ItemPriceInfo,
@@ -886,13 +886,13 @@ impl ItemModule {
         let conn = DATABASE.get().unwrap();
         let component = comp("WishList:");
         let log_options = LoggerOptions::default();
-        let settings = states::get_settings()?.live_scraper.items;
-        let wfm_client = states::app_state()?.wfm_client;
+        let settings = &app.settings.live_scraper.items;
+        let wfm_client = &app.wfm_client;
 
         let log = |msg: &str| info(&component, msg, &log_options);
 
         // Skip items that are not allowed to be bought.
-        if is_blacklisted(&settings, item_info, entry, &TradeMode::WishList) {
+        if is_blacklisted(settings, item_info, entry, &TradeMode::WishList) {
             log(&format!(
                 "Item {} is blacklisted for wishlist buying. Skipping.",
                 item_info.name
@@ -1040,6 +1040,7 @@ impl ItemModule {
     /// Progresses the syndicate workflow for a single item.
     pub async fn progress_syndicate(
         &self,
+        app: &AppState,
         item_info: &CacheTradableItem,
         entry: &mut ItemEntry,
         price: &ItemPriceInfo,
@@ -1047,9 +1048,9 @@ impl ItemModule {
     ) -> Result<(), Error> {
         let component = comp("Syndicate:");
         let log_options = LoggerOptions::default();
-        let settings = states::get_settings()?.live_scraper;
+        let settings = &app.settings.live_scraper;
         let syndicate_settings = &settings.syndicate;
-        let wfm_client = states::app_state()?.wfm_client;
+        let wfm_client = &app.wfm_client;
 
         let log = |msg: &str| info(&component, msg, &log_options);
 

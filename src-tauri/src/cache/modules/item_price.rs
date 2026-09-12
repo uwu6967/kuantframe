@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs::File,
     io::Write,
     path::PathBuf,
@@ -12,12 +13,43 @@ use crate::{
 };
 use qf_api::Client as QFClient;
 use utils::SubType;
-use utils::{find_by, get_location, info, read_json_file_optional, Error, LoggerOptions};
+use utils::{get_location, info, read_json_file_optional, Error, LoggerOptions};
+
+/// Index key: (wfm_url or wfm_id, sub_type). One price row per item + sub type.
+type PriceKey = (String, Option<SubType>);
+
+#[derive(Debug, Default)]
+struct PriceIndex {
+    by_url: HashMap<PriceKey, usize>,
+    by_id: HashMap<PriceKey, usize>,
+}
+
+impl PriceIndex {
+    fn build(items: &[ItemPriceInfo]) -> Self {
+        let mut index = PriceIndex {
+            by_url: HashMap::with_capacity(items.len()),
+            by_id: HashMap::with_capacity(items.len()),
+        };
+        for (i, item) in items.iter().enumerate() {
+            // First occurrence wins, matching the previous linear `find` semantics.
+            index
+                .by_url
+                .entry((item.wfm_url.clone(), item.sub_type.clone()))
+                .or_insert(i);
+            index
+                .by_id
+                .entry((item.wfm_id.clone(), item.sub_type.clone()))
+                .or_insert(i);
+        }
+        index
+    }
+}
 
 #[derive(Debug)]
 pub struct ItemPriceModule {
     path: PathBuf,
-    items: Mutex<Vec<ItemPriceInfo>>,
+    /// Price rows plus lookup indexes, kept under one lock so they never drift apart.
+    items: Mutex<(Vec<ItemPriceInfo>, PriceIndex)>,
     client: Weak<CacheState>,
 }
 
@@ -25,7 +57,7 @@ impl ItemPriceModule {
     pub fn new(client: Arc<CacheState>) -> Arc<Self> {
         Arc::new(Self {
             path: client.base_path.join("items/ItemPrices.json"),
-            items: Mutex::new(Vec::new()),
+            items: Mutex::new((Vec::new(), PriceIndex::default())),
             client: Arc::downgrade(&client),
         })
     }
@@ -76,13 +108,15 @@ impl ItemPriceModule {
         }
         match read_json_file_optional::<Vec<ItemPriceInfo>>(&self.path) {
             Ok(items) => {
+                let index = PriceIndex::build(&items);
+                let count = items.len();
                 let mut items_lock = self.items.lock().unwrap();
-                *items_lock = items;
+                *items_lock = (items, index);
                 info(
                     "Cache:ItemPrice:Load",
                     format!(
                         "Item price cache loaded successfully with {} items.",
-                        items_lock.len()
+                        count
                     ),
                     &LoggerOptions::default(),
                 );
@@ -141,43 +175,41 @@ impl ItemPriceModule {
         Ok(())
     }
 
-    pub fn get_items(&self) -> Result<Vec<ItemPriceInfo>, Error> {
-        let items = self
-            .items
-            .lock()
-            .expect("Failed to lock items mutex")
-            .clone();
-        Ok(items)
-    }
-
+    /// O(1) lookup by Warframe Market URL + sub type. Clones only the matching row.
     pub fn find_by(
         &self,
         url: impl Into<String>,
         sub_type: Option<SubType>,
     ) -> Result<Option<ItemPriceInfo>, Error> {
-        let url = url.into();
-        let items = self.get_items()?;
-        let item = find_by(&items, |u| u.wfm_url == url && u.sub_type == sub_type);
-        Ok(item.cloned())
+        let key: PriceKey = (url.into(), sub_type);
+        let guard = self.items.lock().expect("Failed to lock items mutex");
+        let (items, index) = &*guard;
+        Ok(index.by_url.get(&key).map(|&i| items[i].clone()))
     }
+
+    /// O(1) lookup by Warframe Market item id + sub type. Clones only the matching row.
     pub fn find_by_id(
         &self,
         id: impl Into<String>,
         sub_type: Option<SubType>,
     ) -> Result<Option<ItemPriceInfo>, Error> {
-        let id = id.into();
-        let items = self.get_items()?;
-        let item = find_by(&items, |u| u.wfm_id == id && u.sub_type == sub_type);
-        Ok(item.cloned())
+        let key: PriceKey = (id.into(), sub_type);
+        let guard = self.items.lock().expect("Failed to lock items mutex");
+        let (items, index) = &*guard;
+        Ok(index.by_id.get(&key).map(|&i| items[i].clone()))
     }
+
+    /// Filters under the lock and clones only the rows that pass.
     pub fn get_by_filter<F>(&self, predicate: F) -> Vec<ItemPriceInfo>
     where
         F: Fn(&ItemPriceInfo) -> bool,
     {
-        let items = self.get_items().expect("Failed to get items");
-        items
-            .into_iter()
+        let guard = self.items.lock().expect("Failed to lock items mutex");
+        guard
+            .0
+            .iter()
             .filter(|item| predicate(item))
+            .cloned()
             .collect::<Vec<ItemPriceInfo>>()
     }
 }

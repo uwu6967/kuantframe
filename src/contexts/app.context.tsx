@@ -168,13 +168,14 @@ export function AppContextProvider({ children }: AppContextProviderProps) {
 
   useEffect(() => {
     // 10 Minutes interval to keep the app alive
-    setInterval(
+    const keepAlive = setInterval(
       async () => {
         await refetchAlerts();
       },
       10 * 60 * 1000,
     );
     checkForUpdates(undefined, false, false).catch((e) => console.error("Error checking for updates:", e));
+    return () => clearInterval(keepAlive);
   }, []);
 
   useEffect(() => {
