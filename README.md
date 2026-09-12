@@ -37,7 +37,7 @@ Everything below is on top of upstream Quantframe **v1.6.28**. Credits go to the
 | Enable **gzip + deflate** on `reqwest` (smaller market/API responses) | Ported from [Asomoth PR #125](https://github.com/Kenya-DK/quantframe-react/pull/125) |
 | **Reuse one `reqwest::Client`** for QF API, Discord, and webhook calls (less TLS overhead) | Ported from [bxn-dev PR #127](https://github.com/Kenya-DK/quantframe-react/pull/127) |
 | Bundled **Catppuccin Mocha** theme preset (Appearance → Theme) | Theme JSON from [NakedTrashPanda/Quantframe-Catppuccin-Theme](https://github.com/NakedTrashPanda/Quantframe-Catppuccin-Theme); wired in as a built-in preset |
-| WTB **min buy % of lowest sell** (`min_buy_percent_of_sell`, default `-1` = off) | Implemented for [upstream issue #109](https://github.com/Kenya-DK/quantframe-react/issues/109) (Hit2Skill / Rubinlord) |
+| WTB **min buy % of lowest sell** (`min_buy_percent_of_sell`, default `-1` = off) | Implemented for [upstream issue #109](https://github.com/Kenya-DK/quantframe-react/issues/109) (Hit2Skill / Rubinlord); floored bids no longer get wiped by the Overpriced/knapsack checks |
 
 ### Original to this fork
 

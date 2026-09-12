@@ -1408,7 +1408,7 @@
                     "label": "Min Buy % of Lowest Sell",
                     "placeholder": "Min Buy % of Lowest Sell",
                     "error": "Invalid min buy percent of sell",
-                    "tooltip": "Floor your buy offer at this percent of the lowest live sell offer. Example: lowest sell 100 and 60% → never bid below 60. Set -1 to disable.",
+                    "tooltip": "Floor your buy offer at this percent of the lowest live sell offer so bids are not absurdly low. Example: lowest sell 100 and 60 → bid at least 60. Try 50–70. Set -1 to disable. Does not filter which items to look at — it only raises your bid on items that already passed volume/profit filters.",
                     "link": "https://github.com/Kenya-DK/quantframe-react/issues/109"
                   },
                   "quantity_per_trade": {

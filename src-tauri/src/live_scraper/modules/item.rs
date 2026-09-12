@@ -448,19 +448,21 @@ impl ItemModule {
         }
 
         // Floor buy price at X% of the lowest live sell offer (issue #109).
+        // This intentionally bids higher so sellers find the offer attractive.
+        let mut floored_by_sell_percent = false;
+        let lowest_sell = entry.sell_market_info.lowest_price;
         let min_buy_percent_of_sell = settings.wtb.min_buy_percent_of_sell;
-        if !is_disabled(min_buy_percent_of_sell) {
-            let lowest_sell = entry.sell_market_info.lowest_price;
-            if lowest_sell > 0 && min_buy_percent_of_sell > 0 {
-                let floor = (lowest_sell * min_buy_percent_of_sell + 99) / 100;
-                if post_price < floor {
-                    post_price = floor;
-                    trade_operations.add("MinBuyPercentOfSell");
-                    log(&format!(
-                        "Item {} buy floor raised to {} ({}% of lowest sell {}).",
-                        item_info.name, post_price, min_buy_percent_of_sell, lowest_sell
-                    ));
-                }
+        if !is_disabled(min_buy_percent_of_sell) && lowest_sell > 0 && min_buy_percent_of_sell > 0 {
+            // Never bid at/above the live sell wall.
+            let floor = ((lowest_sell * min_buy_percent_of_sell + 99) / 100).min(lowest_sell - 1);
+            if floor > 0 && post_price < floor {
+                post_price = floor;
+                floored_by_sell_percent = true;
+                trade_operations.add("MinBuyPercentOfSell");
+                log(&format!(
+                    "Item {} buy floor raised to {} ({}% of lowest sell {}).",
+                    item_info.name, post_price, min_buy_percent_of_sell, lowest_sell
+                ));
             }
         }
 
@@ -468,8 +470,15 @@ impl ItemModule {
         // Used to gauge whether we're overpaying relative to recent trades.
         let closed_avg_metric = closed_avg as i64 - post_price;
 
-        // Rough expected profit: the margin between our buy price and the average sell price, minus 1 plat buffer.
-        let potential_profit = closed_avg_metric - 1;
+        // Rough expected profit for knapsack ranking.
+        // When the sell-% floor raised our bid, SMA-vs-buy is no longer the right score (it goes
+        // negative and knapsack + Overpriced would wipe every floored order). Score by remaining
+        // live sell spread instead.
+        let potential_profit = if floored_by_sell_percent && lowest_sell > post_price {
+            (lowest_sell - post_price - 1).max(0)
+        } else {
+            closed_avg_metric - 1
+        };
 
         // Per-item max price cap — if this item has a specific max configured, clamp the post price.
         let item_max_price = settings.general.get_item_max_price(&item_info.wfm_id);
@@ -537,7 +546,8 @@ impl ItemModule {
         }
 
         // If our post price is higher than the market average, flag as overpriced.
-        if closed_avg_metric < 0 {
+        // Skip when Min Buy % of Lowest Sell raised the bid on purpose (issue #109).
+        if closed_avg_metric < 0 && !floored_by_sell_percent {
             trade_operations.add("Delete");
             trade_operations.add("Overpriced");
         }
