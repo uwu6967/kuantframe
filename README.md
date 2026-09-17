@@ -45,11 +45,35 @@ Two things to keep in mind. Keep the official Quantframe closed while Kuantframe
 
 Everything here sits on top of upstream Quantframe v1.6.28.
 
-The app is rebranded. The window and installer say Kuantframe, app data lives in `dev.kuantframe` instead of `dev.kenya.quantframe`, the database is `kuantframeV2.sqlite`, and the updater has no endpoint, so neither install can overwrite the other. The **Copy Quantframe save** button in Settings is new here too.
+### Rebrand
 
-Some of it is ported from the community. Market and API responses are gzip and deflate compressed now, from [Asomoth's PR #125](https://github.com/Kenya-DK/quantframe-react/pull/125). One `reqwest` client is shared between the Quantframe API, Discord and webhook calls instead of a new one per request, from [bxn-dev's PR #127](https://github.com/Kenya-DK/quantframe-react/pull/127). The Catppuccin Mocha theme by [NakedTrashPanda](https://github.com/NakedTrashPanda/Quantframe-Catppuccin-Theme) ships as a built-in preset under Appearance → Theme. And there is a new WTB setting, **Min Buy % of Lowest Sell**, which floors your bids at a percentage of the cheapest sell listing so they are not absurdly low. That came out of [upstream issue #109](https://github.com/Kenya-DK/quantframe-react/issues/109). It's off by default (`-1`), and floored bids no longer get wiped by the Overpriced check.
+| Change | What it does |
+|--|--|
+| **Own app identity** | Window and installer say Kuantframe, data lives in `%LOCALAPPDATA%\dev.kuantframe`, the database is `kuantframeV2.sqlite`, and the logo carries a `[KU]` tag |
+| **Updater off** | No update endpoint, so neither install can overwrite the other |
+| **Copy Quantframe save** | Settings → General button that copies your Quantframe data into Kuantframe, backing up what was there first |
 
-Some of it is mine. The last-transaction row on the home page refreshes live after each trade and shows sold, bought and profit. `pnpm run tauri:dev` talks to the production API instead of expecting a local one on port 6969, so login and prices work out of the box. `pnpm run tauri:build` makes a real release build rather than a debug one. And the live scraper's hot loop got a going-over: price lookups are an indexed map instead of cloning about 1,500 rows per lookup, the scraper stops locking and deep-cloning the whole app state for every item, and the knapsack that picks buy orders skips the full table when everything already fits under your price cap. The UI stutters a lot less while the scraper runs. A leaked alerts timer got cleaned up along the way.
+### Ported from the community
+
+| Change | What it does | Credit |
+|--|--|--|
+| **gzip + deflate** | Market and API responses come back compressed | [Asomoth, PR #125](https://github.com/Kenya-DK/quantframe-react/pull/125) |
+| **Shared HTTP client** | One `reqwest` client for the Quantframe API, Discord and webhooks instead of a new one per request | [bxn-dev, PR #127](https://github.com/Kenya-DK/quantframe-react/pull/127) |
+| **Catppuccin Mocha theme** | Built-in preset under Appearance → Theme | [NakedTrashPanda](https://github.com/NakedTrashPanda/Quantframe-Catppuccin-Theme) |
+| **Min Buy % of Lowest Sell** | WTB setting that floors your bids at a percentage of the cheapest sell listing. Off by default (`-1`), and floored bids no longer get wiped by the Overpriced check | Asked for by Hit2Skill in [upstream issue #109](https://github.com/Kenya-DK/quantframe-react/issues/109), built here |
+
+### My own changes
+
+| Change | What it does |
+|--|--|
+| **Live last-transaction row** | Home page row refreshes after each trade and shows sold, bought and profit |
+| **`tauri:dev` uses the real API** | Talks to `api.quantframe.app` instead of expecting a local server on port 6969, so login and prices work out of the box |
+| **`tauri:build` is a release build** | No more debug installers that point at localhost Vite |
+| **Windows release workflow** | Pushing a `v*` tag builds the `.exe` and `.msi` on GitHub Actions and attaches them to a Release, no signing keys needed |
+| **Indexed price lookups** | The scraper looks prices up in a map instead of cloning about 1,500 rows per lookup |
+| **No per-item state clones** | The scraper reads one snapshot of settings per cycle instead of locking and deep-cloning the whole app state for every item. Less UI stutter |
+| **Knapsack fast path** | The buy-order picker skips the full table when everything already fits under your price cap |
+| **Alerts timer cleanup** | A leaked 10-minute interval now gets cleared |
 
 Kuantframe still depends on Kenya-DK's backend at `api.quantframe.app` for login, prices, the item cache and everything else Quantframe does in the cloud. I don't run a server.
 
