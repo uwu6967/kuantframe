@@ -24,7 +24,7 @@
   },
   "productName": "Kuantframe",
   "mainBinaryName": "Kuantframe",
-  "version": "1.6.28",
+  "version": "1.6.28+1",
   "identifier": "dev.kuantframe",
   "plugins": {
     "updater": {

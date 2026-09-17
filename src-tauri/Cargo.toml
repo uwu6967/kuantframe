@@ -1,6 +1,6 @@
 [package]
 name = "Kuantframe"
-version = "1.6.28"
+version = "1.6.28+1"
 description = "Kuantframe — a visual fork of Quantframe"
 authors = ["Kenya-DK"]
 license = "GPL-3.0-only"

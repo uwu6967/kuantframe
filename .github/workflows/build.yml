@@ -32,13 +32,35 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__
-          releaseName: "Kuantframe v__VERSION__"
+          # Use the pushed git tag (v1.6.28.1), not Cargo/npm's 1.6.28+1 SemVer.
+          tagName: ${{ github.ref_name }}
+          releaseName: "Kuantframe ${{ github.ref_name }}"
           releaseBody: |
-            Windows download for Kuantframe (Quantframe fork).
+            Windows installers for **Kuantframe** v1.6.28.1 (Quantframe fork).
 
-            Install the `.exe` NSIS installer, or use the `.msi` if you prefer.
-            App data lives in `%LOCALAPPDATA%\dev.kuantframe` (separate from official Quantframe).
+            App/Cargo version is `1.6.28+1` (valid SemVer). Windows file version and this release tag are **1.6.28.1**.
+
+            ### Download
+            - **NSIS** `.exe` installer (recommended)
+            - **MSI** installer if you prefer
+
+            Install, then open Kuantframe from the Start Menu / Desktop shortcut.
+
+            ### What's new
+            - Discord contact in README and GitHub issue templates
+            - Settings → General: copy official Quantframe save data into Kuantframe (confirm, backup existing data, then restart)
+
+            ### Important
+            Do **not** run `src-tauri\target\debug\Kuantframe.exe` from a source checkout. That debug build expects Vite on localhost and shows a blank window / `localhost refused to connect`. Use this installer (or `pnpm run tauri:dev` when developing).
+
+            ### Blank slate
+            This build ships **no personal data**: no login, stock/items, settings, or webhooks.
+            First launch creates empty defaults in `%LOCALAPPDATA%\dev.kuantframe`.
+
+            ### Notes
+            - Separate from official Quantframe (`dev.kenya.quantframe`)
+            - Login/cache still use `https://api.quantframe.app`
+            - Windows SmartScreen may warn (unsigned) — More info → Run anyway if you trust the source
           releaseDraft: false
           prerelease: false
           args: ""
