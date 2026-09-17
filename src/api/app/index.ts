@@ -37,4 +37,7 @@ export class AppModule {
   getDefaultSettings(): Promise<TauriTypes.Settings> {
     return this.client.sendInvoke<TauriTypes.Settings>("app_get_default_settings");
   }
+  importQuantframeSave(): Promise<void> {
+    return this.client.sendInvoke<void>("app_import_quantframe_save");
+  }
 }

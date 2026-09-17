@@ -39,6 +39,7 @@ mod enums;
 mod helper;
 mod live_scraper;
 mod log_parser;
+mod save_transfer;
 mod types;
 
 pub static APP: OnceLock<tauri::AppHandle> = OnceLock::new();
@@ -182,6 +183,8 @@ pub fn run() {
         .setup(move |app| {
             // log_parser::types::trade_detection::init_detections();
             APP.get_or_init(|| app.handle().clone());
+            let pending_import =
+                save_transfer::apply_pending_quantframe_import(&helper::get_local_data_path());
             // Set the window title with the current package version so it doesn't need manual updating
             if let Some(window) = app.get_webview_window("main") {
                 let version = app.package_info().version.to_string();
@@ -217,6 +220,25 @@ pub fn run() {
             });
             init_logger();
             set_base_path(helper::get_app_storage_path().to_str().unwrap());
+            match pending_import {
+                Ok(Some(backup)) => info(
+                    "Setup:SaveTransfer",
+                    &format!(
+                        "Applied Quantframe save import; previous Kuantframe data backed up to {}",
+                        backup.display()
+                    ),
+                    &LoggerOptions::default(),
+                ),
+                Ok(None) => {}
+                Err(e) => {
+                    e.log("save_transfer.log");
+                    error(
+                        "Setup:SaveTransfer",
+                        &format!("Failed to apply Quantframe save import: {}", e.message),
+                        &LoggerOptions::default().set_file("save_transfer.log"),
+                    );
+                }
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -230,6 +252,7 @@ pub fn run() {
             commands::app::app_accept_tos,
             commands::app::app_notify_reset,
             commands::app::app_get_default_settings,
+            commands::app::app_import_quantframe_save,
             // Auth commands
             commands::auth::auth_me,
             commands::auth::auth_login,

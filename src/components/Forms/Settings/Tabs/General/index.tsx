@@ -4,6 +4,8 @@ import { useTranslateCommon, useTranslateForms } from "@hooks/useTranslate.hook"
 import { Box, Button, Group, Select, Stack, Text } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
 import { modals } from "@mantine/modals";
+import { notifications } from "@mantine/notifications";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { useEffect, useState } from "react";
 export type GeneralPanelProps = {
   form: UseFormReturnType<TauriTypes.Settings>;
@@ -27,8 +29,19 @@ const languages = [
   { label: "Turkish", value: "tr" },
 ];
 
+function invokeErrorMessage(error: unknown): string {
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message: unknown }).message;
+    if (typeof message === "string" && message.trim().length > 0) {
+      return message;
+    }
+  }
+  return String(error);
+}
+
 export const GeneralPanel = ({ form }: GeneralPanelProps) => {
   const [defaultSettings, setDefaultSettings] = useState<TauriTypes.Settings | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const useTranslateForm = (key: string, context?: { [key: string]: any }, i18Key?: boolean) =>
     useTranslateForms(`settings.tabs.general.${key}`, { ...context }, i18Key);
@@ -62,6 +75,35 @@ export const GeneralPanel = ({ form }: GeneralPanelProps) => {
     });
   };
 
+  const handleImportQuantframe = () => {
+    modals.openConfirmModal({
+      title: useTranslateFormPrompt("import_quantframe.title"),
+      children: <Text size="sm">{useTranslateFormPrompt("import_quantframe.message")}</Text>,
+      labels: { confirm: useTranslateFormPrompt("import_quantframe.confirm"), cancel: useTranslateCommon("buttons.cancel.label") },
+      confirmProps: { color: "red" },
+      onConfirm: async () => {
+        setImporting(true);
+        try {
+          await api.app.importQuantframeSave();
+          notifications.show({
+            title: useTranslateForm("import_quantframe.success_title"),
+            message: useTranslateForm("import_quantframe.success_message"),
+            color: "green.7",
+          });
+          await relaunch();
+        } catch (error) {
+          notifications.show({
+            title: useTranslateForm("import_quantframe.error_title"),
+            message: invokeErrorMessage(error),
+            color: "red.7",
+          });
+        } finally {
+          setImporting(false);
+        }
+      },
+    });
+  };
+
   return (
     <Box h="100%" p={"md"}>
       <Stack>
@@ -76,6 +118,14 @@ export const GeneralPanel = ({ form }: GeneralPanelProps) => {
             radius="md"
           />
         </Group>
+        <Stack gap="xs" maw={520}>
+          <Text size="sm" c="dimmed">
+            {useTranslateForm("import_quantframe.description")}
+          </Text>
+          <Button onClick={handleImportQuantframe} loading={importing} color="orange.7" w="fit-content">
+            {useTranslateFormButtons("import_quantframe_label")}
+          </Button>
+        </Stack>
         {isDefaultSettings() && (
           <Button onClick={handleReset} color="red.7" pos={"absolute"} bottom={55} right={45}>
             {useTranslateFormButtons("reset_settings_label")}
@@ -85,4 +135,3 @@ export const GeneralPanel = ({ form }: GeneralPanelProps) => {
     </Box>
   );
 };
-

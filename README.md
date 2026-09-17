@@ -49,6 +49,7 @@ Everything below is on top of upstream Quantframe **v1.6.28**. Credits go to the
 | **Windows installers on GitHub Releases** | NSIS `.exe` + MSI; blank-slate packages (no personal settings, stock, auth, or webhooks) |
 | **Windows-only release workflow** | `.github/workflows/build.yml` builds installers on `v*` tags without requiring Tauri signing secrets |
 | **`tauri:build` = release** | Package script no longer defaults to `--debug`, so local/CI installers embed the UI instead of pointing at localhost Vite |
+| **Copy Quantframe save in Settings** | General tab copies official Quantframe app data into Kuantframe after confirm; existing Kuantframe data is backed up, then replaced |
 
 ### Live scraper hot-loop optimizations
 
@@ -90,7 +91,9 @@ First build can take a few minutes; later starts are faster. Keep official Quant
 
 ### Copy settings from official Quantframe
 
-With both apps closed, copy from `%LOCALAPPDATA%\dev.kenya.quantframe` into `%LOCALAPPDATA%\dev.kuantframe`:
+In **Settings → General**, use **Copy Quantframe save**. Confirm the prompt; this backs up current Kuantframe data, then overwrites it with Quantframe’s app data (`%LOCALAPPDATA%\dev.kenya.quantframe` → `%LOCALAPPDATA%\dev.kuantframe`, renaming `quantframeV2.sqlite` → `kuantframeV2.sqlite`). Close Quantframe first. Kuantframe restarts to load the imported save.
+
+To copy manually with both apps closed, copy from `%LOCALAPPDATA%\dev.kenya.quantframe` into `%LOCALAPPDATA%\dev.kuantframe`:
 
 - `settings.json`
 - `auth.json`
@@ -102,3 +105,4 @@ With both apps closed, copy from `%LOCALAPPDATA%\dev.kenya.quantframe` into `%LO
 - This fork: https://github.com/uwu6967/kuantframe
 - Upstream: https://github.com/Kenya-DK/quantframe-react
 - License: [GPL-3.0](./LICENSE)
+- Discord (g f): [secretwasianprince](https://discord.com/users/221876054392963072) (user id `221876054392963072`)

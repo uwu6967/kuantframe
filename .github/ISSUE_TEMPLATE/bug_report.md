@@ -58,7 +58,7 @@ Please attach a ZIP file containing your logs. Here is how to export them:
 - **Version 1.6.0 and above:** Go to Settings > Logs tab, and click **"Export Logs."**
 
 > [!IMPORTANT]
-> This will create a ZIP file on your desktop. Please attach it to this issue or send it via DM to the developer on Discord.
+> This will create a ZIP file on your desktop. Please attach it to this issue or send it via DM to g f on Discord: **secretwasianprince** (user id `221876054392963072`).
 
 **Example:**
 [Screenshot of the unresponsive button]

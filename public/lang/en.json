@@ -1270,12 +1270,24 @@
             },
             "buttons": {
               "reset_settings_label": "Reset To default settings",
-              "prompt_reset_label": "Reset"
+              "prompt_reset_label": "Reset",
+              "import_quantframe_label": "Copy Quantframe save"
+            },
+            "import_quantframe": {
+              "description": "Copy settings, cache, login, and database from official Quantframe into this app. This overwrites current Kuantframe save data.",
+              "success_title": "Quantframe save copied",
+              "success_message": "Restarting Kuantframe to load the imported save.",
+              "error_title": "Could not copy Quantframe save"
             },
             "prompt": {
               "reset_settings": {
                 "title": "Reset settings",
                 "message": "Reset all settings to default values?"
+              },
+              "import_quantframe": {
+                "title": "Replace Kuantframe data with Quantframe save?",
+                "message": "This will replace and reset all current Kuantframe data (settings, cache, login, and database) with the Quantframe save. Existing Kuantframe data will be backed up, then overwritten. Close Quantframe first. Click Cancel if you do not want to continue.",
+                "confirm": "Replace Kuantframe data"
               }
             }
           },

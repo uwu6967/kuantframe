@@ -3,10 +3,10 @@ use std::sync::{Arc, Mutex};
 use crate::{
     app::{AppState, Settings},
     log_parser::LogParserState,
-    APP, HAS_STARTED,
+    save_transfer, APP, HAS_STARTED,
 };
 use serde_json::{json, Value};
-use utils::Error;
+use utils::{get_location, Error};
 
 #[tauri::command]
 pub async fn initialized() -> Result<bool, Error> {
@@ -94,4 +94,21 @@ pub async fn app_notify_reset(id: String) -> Result<Value, Error> {
         return Ok(value[id.clone()].clone());
     }
     Ok(json!({}))
+}
+
+#[tauri::command]
+pub async fn app_import_quantframe_save() -> Result<(), Error> {
+    let local_data = crate::helper::get_local_data_path();
+    let _staging = tokio::task::spawn_blocking(move || {
+        save_transfer::stage_quantframe_import(&local_data)
+    })
+    .await
+    .map_err(|e| {
+        Error::new(
+            "SaveTransfer",
+            format!("Import task failed: {}", e),
+            get_location!(),
+        )
+    })??;
+    Ok(())
 }
