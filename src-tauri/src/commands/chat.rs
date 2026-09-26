@@ -11,7 +11,7 @@ use crate::{
     emit_update_user,
     helper::paginate,
     track_event,
-    utils::{ErrorFromExt, WfmChatPaginationQueryDto},
+    utils::{ErrorFromExt, WfmApiErrorExt, WfmChatPaginationQueryDto},
 };
 
 // --------------------------------------------------

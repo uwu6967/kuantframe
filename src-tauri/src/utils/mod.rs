@@ -23,7 +23,7 @@ pub use create_stock_riven_ext::CreateStockRivenExt;
 pub use create_syndicate_item_ext::CreateSyndicateItemExt;
 pub use create_trade_entry_ext::*;
 pub use create_wish_list_item_ext::CreateWishListItemExt;
-pub use error_ext::ErrorFromExt;
+pub use error_ext::{ErrorFromExt, WfmApiErrorExt};
 pub use order_ext::OrderExt;
 pub use order_list_ext::OrderListExt;
 pub use sub_type_ext::SubTypeExt;

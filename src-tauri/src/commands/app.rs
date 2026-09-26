@@ -4,7 +4,7 @@ use crate::{
     app::{AppState, Settings},
     log_parser::LogParserState,
     save_transfer, track_event,
-    wf_inventory::WFInventoryState,
+    wf_inventory::{InventorySource, WFInventoryState},
     APP, HAS_STARTED,
 };
 use qf_api::enums::ApplicationEvent;

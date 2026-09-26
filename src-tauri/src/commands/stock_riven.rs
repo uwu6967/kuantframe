@@ -13,7 +13,7 @@ use crate::{
     handlers::{handle_riven, handle_riven_by_entity},
     helper, track_event,
     types::PermissionsFlags,
-    utils::ErrorFromExt,
+    utils::{ErrorFromExt, WfmApiErrorExt},
     APP, DATABASE,
 };
 
