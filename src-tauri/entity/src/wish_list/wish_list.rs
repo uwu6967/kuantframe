@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use utils::Properties;
 use utils::SubType;
 
-pub static ALLOWED_PROPERTIES_FIELDS: &[&str] = &["max_price", "min_price"];
+pub static ALLOWED_PROPERTIES_FIELDS: &[&str] = &["max_price", "min_price", "cooldown"];
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "wish_list")]
@@ -40,9 +40,8 @@ pub struct Model {
     pub locked: bool,
 
     #[sea_orm(ignore)]
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "changes")]
-    pub changes: Option<String>,
+    pub changes: Vec<String>,
     // Extra properties
     #[sea_orm(column_type = "Json")]
     #[serde(default, flatten)]
@@ -80,7 +79,7 @@ impl Model {
             is_dirty: true,
             locked: false,
             is_hidden: false,
-            changes: None,
+            changes: vec![],
             properties,
         }
     }
@@ -116,13 +115,17 @@ impl Model {
         }
         false
     }
-
+    pub fn add_change(&mut self, field: &str) {
+        if !self.changes.contains(&field.to_string()) {
+            self.changes.push(field.to_string());
+        }
+    }
     pub fn set_list_price(&mut self, list_price: Option<i64>) {
         if self.locked {
             return;
         }
         if Self::set_if_changed(&mut self.list_price, list_price, &mut self.is_dirty) {
-            self.changes = Some("list_price".to_string());
+            self.add_change("list_price");
         }
     }
 
@@ -131,7 +134,7 @@ impl Model {
             return;
         }
         if Self::set_if_changed(&mut self.status, status, &mut self.is_dirty) {
-            self.changes = Some("status".to_string());
+            self.add_change("status");
         }
     }
     pub fn uuid(&self) -> String {
@@ -155,6 +158,7 @@ impl Model {
                 .map_or(FieldChange::Null, |v| FieldChange::Value(v)),
             is_hidden: FieldChange::Value(self.is_hidden),
             price_history: FieldChange::Value(self.price_history.0.clone()),
+            sub_type: FieldChange::Value(self.sub_type.clone()),
             status: FieldChange::Value(self.status.clone()),
             properties: FieldChange::Value(self.properties.clone()),
         }

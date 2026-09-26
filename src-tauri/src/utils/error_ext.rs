@@ -3,6 +3,36 @@ use serde_json::json;
 use utils::{Error, LogLevel, Properties};
 use wf_market::errors::ApiError as WFRequestError;
 
+/// Variant name for a Warframe Market API error.
+///
+/// The published `wf-market` crate does not expose this. Upstream development
+/// calls it while tracking events, so the label lives here.
+pub trait WfmApiErrorExt {
+    fn error_type(&self) -> &'static str;
+}
+
+impl WfmApiErrorExt for WFRequestError {
+    fn error_type(&self) -> &'static str {
+        match self {
+            WFRequestError::TooManyRequests(_) => "TooManyRequests",
+            WFRequestError::RequestError(_) => "RequestError",
+            WFRequestError::Unauthorized(_) => "Unauthorized",
+            WFRequestError::ParsingError(_, _) => "ParsingError",
+            WFRequestError::NotFound(_) => "NotFound",
+            WFRequestError::BadRequest(_) => "BadRequest",
+            WFRequestError::InvalidCredentials(_) => "InvalidCredentials",
+            WFRequestError::Forbidden(_) => "Forbidden",
+            WFRequestError::EndOfFile(_) => "EndOfFile",
+            WFRequestError::InternalServerError(_) => "InternalServerError",
+            WFRequestError::OrderLimitExceeded(_) => "OrderLimitExceeded",
+            WFRequestError::OrderLimitExceededSamePrice(_) => "OrderLimitExceededSamePrice",
+            WFRequestError::AuctionLimitExceeded(_) => "AuctionLimitExceeded",
+            WFRequestError::InvalidType { .. } => "InvalidType",
+            WFRequestError::Unknown(_) => "Unknown",
+        }
+    }
+}
+
 use crate::SENSITIVE_FIELDS;
 
 /// Extension trait for creating Error instances from different error types

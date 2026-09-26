@@ -1,15 +1,17 @@
+use crate::wf_inventory::WFInventorySource;
+
 use super::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WFInventorySettings {
-    pub inv_path: String,
+    pub source: WFInventorySource,
 }
 
 impl Default for WFInventorySettings {
     fn default() -> Self {
         Self {
-            inv_path: String::from(""),
+            source: WFInventorySource::None,
         }
     }
 }

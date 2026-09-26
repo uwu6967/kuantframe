@@ -22,6 +22,15 @@ impl Default for CacheSyndicateTitle {
         }
     }
 }
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct CacheSyndicateFavour {
+    #[serde(rename = "standingCost")]
+    pub standing_cost: i64,
+    #[serde(rename = "creditsCost")]
+    pub credits_cost: i64,
+    #[serde(rename = "uniqueName", default)]
+    pub unique_name: String,
+}
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct CacheSyndicate {
@@ -42,13 +51,16 @@ pub struct CacheSyndicate {
 
     #[serde(rename = "titles", default)]
     pub titles: Vec<CacheSyndicateTitle>,
+
+    #[serde(rename = "favours", default)]
+    pub favours: Vec<CacheSyndicateFavour>,
 }
 
 impl CacheSyndicate {
-    // pub fn get_title_by_level(&self, level: i32) -> Option<CacheSyndicateTitle> {
-    //     self.titles
-    //         .iter()
-    //         .find(|title| level == title.level)
-    //         .cloned()
-    // }
+    pub fn get_title_by_level(&self, level: i32) -> Option<CacheSyndicateTitle> {
+        self.titles
+            .iter()
+            .find(|title| level == title.level)
+            .cloned()
+    }
 }

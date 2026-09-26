@@ -1,19 +1,18 @@
 import { TauriTypes } from "$types";
-import { GenerateTradeMessageModal, GenerateTradeMessageModalProps } from "@components/Modals/GenerateTradeMessage";
 import { ItemDetailsModal, Operations } from "@components/Modals/ItemDetails";
-import { useTranslateCommon, useTranslateModals } from "@hooks/useTranslate.hook";
+import { useTranslateCommon } from "@hooks/useTranslate.hook";
 import { Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 
 interface ModalHooks {
   updateMutation: {
-    mutateAsync: (data: TauriTypes.UpdateStockItem) => Promise<any>;
+    mutateAsync: (data: TauriTypes.UpdateSyndicateItem) => Promise<any>;
   };
   updateMultipleMutation: {
-    mutateAsync: (data: { ids: number[]; input: TauriTypes.UpdateStockItem }) => Promise<any>;
+    mutateAsync: (data: { ids: number[]; input: TauriTypes.UpdateSyndicateItem }) => Promise<any>;
   };
   sellStockMutation: {
-    mutateAsync: (data: TauriTypes.SellStockItem) => Promise<any>;
+    mutateAsync: (data: TauriTypes.SellSyndicateItem) => Promise<any>;
   };
   deleteMutation: {
     mutateAsync: (id: number) => Promise<any>;
@@ -51,31 +50,12 @@ export const useModals = ({ updateMutation, updateMultipleMutation, sellStockMut
     });
   };
 
-  const OpenWTSModal = (input: GenerateTradeMessageModalProps) => {
-    modals.open({
-      size: "100%",
-      title: useTranslateModals("generate_trade_message.title", { count: input.items.length }),
-      withCloseButton: false,
-      children: <GenerateTradeMessageModal {...input} />,
-    });
-  };
-
-  const OpenSellModal = (stock: TauriTypes.StockItem) => {
+  const OpenSellModal = (stock: TauriTypes.SyndicateItem) => {
     modals.openContextModal({
       modal: "prompt",
       title: useTranslateCommon("prompts.sell_manual.title"),
       innerProps: {
         fields: [
-          {
-            name: "quantity",
-            label: useTranslateCommon("prompts.sell_manual.fields.quantity.label"),
-            attributes: {
-              min: 0,
-              max: stock.owned,
-            },
-            value: stock.owned,
-            type: "number",
-          },
           {
             name: "sell",
             label: useTranslateCommon("prompts.sell_manual.fields.sell.label"),
@@ -86,24 +66,30 @@ export const useModals = ({ updateMutation, updateMultipleMutation, sellStockMut
             type: "number",
           },
         ],
-        onConfirm: async (data: { sell: number; quantity: number }) => {
+        onConfirm: async (data: { sell: number }) => {
           if (!stock) return;
-          const { sell, quantity } = data;
-          await sellStockMutation.mutateAsync({ id: stock.id, wfm_url: stock.wfm_url, sub_type: stock.sub_type, price: sell, quantity });
+          const { sell } = data;
+          await sellStockMutation.mutateAsync({
+            id: stock.id,
+            wfm_url: stock.wfm_url,
+            rawSyndicate: stock.syndicate_unique_name,
+            sub_type: stock.sub_type,
+            price: sell,
+          });
         },
         onCancel: (id: string) => modals.close(id),
       },
     });
   };
 
-  const OpenInfoModal = (item: TauriTypes.StockItem) => {
+  const OpenInfoModal = (item: TauriTypes.SyndicateItem) => {
     modals.open({
       size: "100%",
       withCloseButton: false,
       children: (
         <ItemDetailsModal
           value={item.id}
-          lookup="stock_item"
+          lookup="syndicate_item"
           operations={[Operations.ProfitabilityInfo, Operations.MarketInfo, Operations.TransactionInfo]}
         />
       ),
@@ -117,9 +103,9 @@ export const useModals = ({ updateMutation, updateMultipleMutation, sellStockMut
       children: (
         <ItemDetailsModal
           value={ids[0]}
-          lookup="stock_item"
+          lookup="syndicate_item"
           operations={[Operations.EditForm]}
-          onSave={async (input: TauriTypes.UpdateStockItem) => {
+          onSave={async (input: TauriTypes.UpdateSyndicateItem) => {
             if (ids.length == 1) await updateMutation.mutateAsync(input);
             else await updateMultipleMutation.mutateAsync({ ids, input: { ...input, id: -1 } });
             modals.close(id);
@@ -157,6 +143,5 @@ export const useModals = ({ updateMutation, updateMultipleMutation, sellStockMut
     OpenUpdateMultipleModal,
     OpenDeleteModal,
     OpenDeleteMultipleModal,
-    OpenWTSModal,
   };
 };

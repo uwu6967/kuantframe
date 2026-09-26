@@ -40,7 +40,7 @@ export const LiveTradingPanel = ({ form, onHideButtons }: LiveTradingPanelProps)
     },
     {
       label: useTranslateTabs("live_scraper.syndicate.title"),
-      component: <SyndicatePanel form={form} />,
+      component: <SyndicatePanel form={form} setHideTab={(v) => setHideTab(v)} setHideButtons={(v) => onHideButtons?.(v)} />,
       hide: !import.meta.env.DEV,
       id: "syndicate",
     },

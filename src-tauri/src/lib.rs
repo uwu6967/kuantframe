@@ -261,8 +261,7 @@ pub fn run() {
             // User commands
             commands::user::user_set_status,
             // Analytics commands
-            commands::analytics::analytics_add_metric,
-            commands::analytics::analytics_set_last_user_activity,
+            commands::analytics::track_event,
             // Alert commands
             commands::alert::alert_get_alerts,
             // Cache commands
@@ -357,6 +356,20 @@ pub fn run() {
             commands::item::item_prices_lookup,
             commands::item::item_price_lookup,
             commands::item::export_item_price_data,
+            // Syndicate Item commands
+            commands::syndicate_item::syndicate_item_import_items,
+            commands::syndicate_item::get_syndicate_item_pagination,
+            commands::syndicate_item::get_syndicate_item_financial_report,
+            commands::syndicate_item::get_syndicate_item_status_counts,
+            commands::syndicate_item::get_syndicate_item_syndicate_counts,
+            commands::syndicate_item::syndicate_item_create,
+            commands::syndicate_item::syndicate_item_delete,
+            commands::syndicate_item::syndicate_item_sell,
+            commands::syndicate_item::syndicate_item_update,
+            commands::syndicate_item::syndicate_item_get_by_id,
+            commands::syndicate_item::syndicate_item_update_multiple,
+            commands::syndicate_item::syndicate_item_delete_multiple,
+            commands::syndicate_item::export_syndicate_item_json,
             // Syndicate Item Price commands
             commands::syndicate_price::syndicate_item_prices_lookup,
             commands::syndicate_price::export_syndicate_item_price_data,
@@ -388,6 +401,8 @@ pub fn run() {
             commands::handlers::handles_handle_items,
             // WFInventory commands
             commands::wf_inventory::wf_inventory_get_rivens,
+            commands::wf_inventory::wf_inventory_get_syndicates,
+            commands::wf_inventory::wf_inventory_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

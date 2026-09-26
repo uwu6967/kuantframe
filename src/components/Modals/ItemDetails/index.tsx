@@ -13,10 +13,10 @@ export enum Operations {
 }
 
 export type ItemDetailsModalProps = {
-  lookup: "stock_item" | "wish_list_item" | "order";
+  lookup: "stock_item" | "syndicate_item" | "wish_list_item" | "order";
   operations: Operations[];
   value: number | string;
-  onSave?: (item: TauriTypes.UpdateStockItem | TauriTypes.UpdateWishListItem) => void;
+  onSave?: (item: TauriTypes.UpdateStockItem | TauriTypes.UpdateSyndicateItem | TauriTypes.UpdateWishListItem) => void;
 };
 export function ItemDetailsModal({ lookup, operations, value, onSave }: ItemDetailsModalProps) {
   // Don't cache the result of this query
@@ -24,6 +24,12 @@ export function ItemDetailsModal({ lookup, operations, value, onSave }: ItemDeta
     queryKey: ["stock_item", value],
     queryFn: () => api.stock_item.getById<{ ui_operations: string[] }>(value as number, operations),
     enabled: lookup === "stock_item",
+    gcTime: 0,
+  });
+  const { data: dataSyndicateItem } = useQuery({
+    queryKey: ["syndicate_item", value],
+    queryFn: () => api.syndicate_item.getById<{ ui_operations: string[] }>(value as number, operations),
+    enabled: lookup === "syndicate_item",
     gcTime: 0,
   });
   const { data: dataWishListItem } = useQuery({
@@ -40,7 +46,14 @@ export function ItemDetailsModal({ lookup, operations, value, onSave }: ItemDeta
     gcTime: 0,
   });
 
-  const data = lookup === "stock_item" ? dataStockItem : lookup === "wish_list_item" ? dataWishListItem : dataOrder;
+  const data =
+    lookup === "stock_item"
+      ? dataStockItem
+      : lookup === "syndicate_item"
+        ? dataSyndicateItem
+        : lookup === "wish_list_item"
+          ? dataWishListItem
+          : dataOrder;
 
   if (!data)
     return (

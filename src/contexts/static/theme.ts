@@ -37,6 +37,7 @@ export const defaultTheme = {
         [TauriTypes.StockStatus.Overpriced]: DEFAULT_COLORS.pink[9],
         [TauriTypes.StockStatus.Underpriced]: DEFAULT_COLORS.orange[6],
         [TauriTypes.StockStatus.MaxPriceDrop]: DEFAULT_COLORS.pink[7],
+        [TauriTypes.StockStatus.InsufficientStanding]: DEFAULT_COLORS.yellow[7],
       },
       alertType: {
         error: DEFAULT_COLORS.red[7],

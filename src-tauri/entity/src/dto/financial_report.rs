@@ -1,4 +1,4 @@
-use crate::{enums::*, stock_item, stock_riven, transaction::*, wish_list};
+use crate::{enums::*, stock_item, stock_riven, syndicate_item, transaction::*, wish_list};
 use serde::Serialize;
 use serde_json::json;
 use utils::{group_by, Properties};
@@ -223,6 +223,54 @@ impl From<&Vec<stock_item::Model>> for FinancialReport {
             .map(|item| item.bought * item.owned)
             .max()
             .unwrap_or(0) as f64;
+
+        FinancialReport::new(
+            total_transactions,
+            sales.len(),
+            highest_revenue,
+            lowest_revenue,
+            revenue,
+            purchases.len(),
+            highest_expense,
+            lowest_expense,
+            expenses,
+        )
+    }
+}
+
+impl From<&Vec<syndicate_item::Model>> for FinancialReport {
+    fn from(items: &Vec<syndicate_item::Model>) -> Self {
+        let total_transactions = items.len();
+
+        let purchases: Vec<&syndicate_item::Model> =
+            items.iter().filter(|item| item.standing_cost > 0).collect();
+        let expenses: i64 = purchases.iter().map(|item| item.standing_cost).sum();
+        let highest_expense = purchases
+            .iter()
+            .map(|item| item.standing_cost)
+            .max()
+            .unwrap_or(0) as f64;
+        let lowest_expense = purchases
+            .iter()
+            .map(|item| item.standing_cost)
+            .min()
+            .unwrap_or(0) as f64;
+
+        let sales: Vec<&syndicate_item::Model> = items
+            .iter()
+            .filter(|item| item.list_price.unwrap_or(0) > 0)
+            .collect();
+        let highest_revenue = sales
+            .iter()
+            .map(|item| item.list_price.unwrap_or(0))
+            .max()
+            .unwrap_or(0) as f64;
+        let lowest_revenue = sales
+            .iter()
+            .map(|item| item.list_price.unwrap_or(0))
+            .min()
+            .unwrap_or(0) as f64;
+        let revenue: i64 = sales.iter().map(|item| item.list_price.unwrap_or(0)).sum();
 
         FinancialReport::new(
             total_transactions,

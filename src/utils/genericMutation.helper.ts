@@ -1,10 +1,11 @@
+import { useTranslateCommon } from "@hooks/useTranslate.hook";
 import { notifications } from "@mantine/notifications";
 import { useMutation } from "@tanstack/react-query";
-import { useTranslateCommon } from "@hooks/useTranslate.hook";
 
 export interface MutationHooks {
   refetchQueries: (refetchStatus?: boolean) => void;
   setLoadingRows: (callback: (prev: string[]) => string[]) => void;
+  refetchStatusString?: string[];
 }
 // Generic mutation creator function
 export const createGenericMutation = <TData, TVariables>(
@@ -16,7 +17,7 @@ export const createGenericMutation = <TData, TVariables>(
     getLoadingId?: (variables: TVariables) => string | string[];
     getSuccessMessage?: (data: TData, variables: TVariables) => { [key: string]: any };
   },
-  hooks: MutationHooks
+  hooks: MutationHooks,
 ) => {
   return useMutation({
     mutationFn: config.mutationFn,
@@ -35,14 +36,14 @@ export const createGenericMutation = <TData, TVariables>(
         }
       : undefined,
     onSuccess: (data: TData, variables: TVariables) => {
-      let refetchStatusString = ["create_stock_item"];
+      let refetchStatusString = hooks.refetchStatusString ?? ["create_stock_item"];
       hooks.refetchQueries(refetchStatusString.includes(config.successKey));
       const isMultiple = config.isMultiple ? config.isMultiple(variables) : false;
       notifications.show({
         title: useTranslateCommon(`notifications.${config.successKey}.success.title${isMultiple ? "_multiple" : ""}`),
         message: useTranslateCommon(
           `notifications.${config.successKey}.success.message${isMultiple ? "_multiple" : ""}`,
-          config.getSuccessMessage ? config.getSuccessMessage(data, variables) : {}
+          config.getSuccessMessage ? config.getSuccessMessage(data, variables) : {},
         ),
         color: "green.7",
       });

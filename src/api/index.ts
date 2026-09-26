@@ -22,6 +22,7 @@ import { SoundModule } from "./sound";
 import { StockItemModule } from "./stack_item";
 import { StockRivenModule } from "./stack_riven";
 import { SyndicateModule } from "./syndicate";
+import { SyndicateItemModule } from "./syndicate_item";
 import { TradeEntryModule } from "./trade_entry";
 import { TransactionModule } from "./transaction";
 import { UserModule } from "./user";
@@ -46,6 +47,7 @@ export class TauriClient {
     this.log = new LogModule(this);
     this.stock_item = new StockItemModule(this);
     this.stock_riven = new StockRivenModule(this);
+    this.syndicate_item = new SyndicateItemModule(this);
     this.wish_list = new WishListModule(this);
     this.debug = new DebugModule(this);
     this.order = new OrderModule(this);
@@ -194,6 +196,7 @@ export class TauriClient {
   live_scraper: LiveScraperModule;
   stock_item: StockItemModule;
   stock_riven: StockRivenModule;
+  syndicate_item: SyndicateItemModule;
   wish_list: WishListModule;
   debug: DebugModule;
   chat: ChatModule;
@@ -229,7 +232,7 @@ const SendTauriEvent = async (event: string, data?: any) => window.api.events.Fi
 const SendTauriDataEvent = async (event: string, operation: TauriTypes.EventOperations, data: any) =>
   window.api.events.FireEvent(event, { operation, data });
 const WFMThumbnail = (thumb: string) => `https://warframe.market/static/assets/${thumb}`;
-const AddMetric = (metric: string, value: number | string) => {
+const AddMetric = (metric: string, value: Record<string, string>) => {
   window.api.analytics.add_metric(metric, value);
 };
 const HasPermission = async (flag: TauriTypes.PermissionsFlags): Promise<boolean> => {

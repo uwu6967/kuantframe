@@ -3,10 +3,13 @@ use std::sync::{Arc, Mutex};
 use crate::{
     app::{AppState, Settings},
     log_parser::LogParserState,
-    save_transfer, APP, HAS_STARTED,
+    save_transfer, track_event,
+    wf_inventory::{InventorySource, WFInventoryState},
+    APP, HAS_STARTED,
 };
+use qf_api::enums::ApplicationEvent;
 use serde_json::{json, Value};
-use utils::{get_location, Error};
+use utils::{get_duration_since_start, get_location, Error};
 
 #[tauri::command]
 pub async fn initialized() -> Result<bool, Error> {
@@ -47,6 +50,7 @@ pub async fn app_update_settings(
     mut settings: Settings,
     app: tauri::State<'_, Mutex<AppState>>,
     log_parser: tauri::State<'_, Mutex<Arc<LogParserState>>>,
+    wf_inventory: tauri::State<'_, Mutex<Arc<WFInventoryState>>>,
 ) -> Result<Settings, Error> {
     let mut app = app.lock()?;
     settings.notifications.custom_sounds = app.settings.notifications.custom_sounds.clone();
@@ -68,12 +72,31 @@ pub async fn app_update_settings(
             _ => {}
         }
     }
+
+    settings.wf_inventory.source.validate()?;
+
+    let current_wf_source = app.settings.wf_inventory.source.clone();
+    if settings.wf_inventory.source != current_wf_source {
+        let wf_inventory = wf_inventory.lock()?;
+        wf_inventory.set_source(settings.wf_inventory.source.clone());
+    }
+
     app.update_settings(settings.clone())?;
     Ok(settings.clone())
 }
 
 #[tauri::command]
 pub async fn app_exit() -> Result<Settings, Error> {
+    track_event!(
+        ApplicationEvent::AppExit,
+        [
+            ("success", "true".to_string()),
+            (
+                "session_duration",
+                get_duration_since_start().as_secs().to_string()
+            ),
+        ]
+    );
     std::process::exit(0);
 }
 #[tauri::command]

@@ -11,8 +11,8 @@ interface Properties {
 }
 export type EditTabProps = {
   lookup: string;
-  value: TauriTypes.StockItem<Properties> | TauriTypes.WishListItem<Properties>;
-  onSave?: (item: TauriTypes.UpdateStockItem | TauriTypes.UpdateWishListItem) => void;
+  value: TauriTypes.StockItem<Properties> | TauriTypes.SyndicateItem<Properties> | TauriTypes.WishListItem<Properties>;
+  onSave?: (item: TauriTypes.UpdateStockItem | TauriTypes.UpdateSyndicateItem | TauriTypes.UpdateWishListItem) => void;
 };
 
 export function EditTab({ lookup, value, onSave }: EditTabProps) {
@@ -22,7 +22,7 @@ export function EditTab({ lookup, value, onSave }: EditTabProps) {
   const useTranslateFields = (key: string, context?: { [key: string]: any }, i18Key?: boolean) =>
     useTranslateTab(`fields.${key}`, { ...context }, i18Key);
   const form = useForm({
-    initialValues: value as TauriTypes.UpdateStockItem | TauriTypes.UpdateWishListItem,
+    initialValues: value as TauriTypes.UpdateStockItem | TauriTypes.UpdateSyndicateItem | TauriTypes.UpdateWishListItem,
   });
 
   const GetProperty = (key: string) => {
@@ -83,7 +83,7 @@ export function EditTab({ lookup, value, onSave }: EditTabProps) {
         />
         <NumberInput
           min={0}
-          display={ShowField(["stock_item", "wish_list_item"])}
+          display={ShowField(["stock_item", "syndicate_item", "wish_list_item"])}
           label={useTranslateFields("minimum_price")}
           value={GetProperty("min_price")}
           onChange={(value) => form.setFieldValue("properties.min_price", Number(value))}

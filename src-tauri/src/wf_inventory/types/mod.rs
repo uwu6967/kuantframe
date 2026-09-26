@@ -20,3 +20,6 @@ pub use item_riven::*;
 
 pub mod affiliation;
 pub use affiliation::*;
+
+pub mod inv_sources;
+pub use inv_sources::*;

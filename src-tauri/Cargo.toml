@@ -1,6 +1,6 @@
 [package]
 name = "Kuantframe"
-version = "1.6.28+1"
+version = "1.6.28+2"
 description = "Kuantframe — a visual fork of Quantframe"
 authors = ["Kenya-DK"]
 license = "GPL-3.0-only"
@@ -47,7 +47,7 @@ zip = "0.6"
 sha256 = "1.5.0"
 uuid = { version = "1.19.0",features = ["v4"] }
 # wf-market = { path = "C:/Users/Kenya/Desktop/Andet/Coding/Warframe/wf-market" }
-wf-market = { git = "https://github.com/KibbeWater/wf-market", rev = "aba1d268a7a0f76d54ba3dcd862d2f3a4f7e3496" }
+wf-market = { git = "https://github.com/KibbeWater/wf-market", rev = "795372cbe621355944cb8afb0c8846f1feec89a2" }
 
 # Database dependencies
 migration = { path = "./migration" }

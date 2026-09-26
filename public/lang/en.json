@@ -177,6 +177,54 @@
           "message": "Stock item {{name}} has been successfully sold."
         }
       },
+      "import_syndicate_items": {
+        "error": {
+          "title": "Import Syndicate Items Error",
+          "message": "An error occurred while trying to import syndicate items."
+        },
+        "success": {
+          "title": "Import Syndicate Items Success",
+          "message": "{{count}} syndicate items have been successfully imported."
+        }
+      },
+      "update_syndicate_item": {
+        "error": {
+          "title": "Update Syndicate Item Error",
+          "title_multiple": "Update Syndicate Item Error",
+          "message": "An error occurred while trying to update the syndicate item.",
+          "message_multiple": "An error occurred while trying to update multiple syndicate items."
+        },
+        "success": {
+          "title": "Update Syndicate Item Success",
+          "title_multiple": "Update Syndicate Item Success",
+          "message": "Syndicate item {{name}} has been successfully updated.",
+          "message_multiple": "{{count}} syndicate items have been successfully updated."
+        }
+      },
+      "delete_syndicate_item": {
+        "error": {
+          "title": "Delete Syndicate Item Error",
+          "title_multiple": "Delete Syndicate Item Error",
+          "message": "An error occurred while trying to delete the syndicate item.",
+          "message_multiple": "An error occurred while trying to delete multiple syndicate items."
+        },
+        "success": {
+          "title": "Delete Syndicate Item Success",
+          "title_multiple": "Delete Syndicate Item Success",
+          "message": "Syndicate item {{name}} has been successfully deleted.",
+          "message_multiple": "{{count}} syndicate items have been successfully deleted."
+        }
+      },
+      "sell_syndicate_item": {
+        "error": {
+          "title": "Sell Syndicate Item Error",
+          "message": "An error occurred while trying to sell the syndicate item."
+        },
+        "success": {
+          "title": "Sell Syndicate Item Success",
+          "message": "Syndicate item {{name}} has been successfully sold."
+        }
+      },
       "create_wish_list": {
         "error": {
           "title": "Create Wishlist Error",
@@ -592,6 +640,7 @@
       "overpriced": "Overpriced",
       "underpriced": "Underpriced",
       "max_price_drop": "Max Price Drop",
+      "insufficient_standing": "Insufficient Standing",
       "details": {
         "pending": "Waiting to be processed",
         "live": "Live on Warframe Market",
@@ -603,7 +652,8 @@
         "order_limit": "Is limited by the order limit",
         "overpriced": "Is overpriced",
         "underpriced": "Is underpriced",
-        "max_price_drop": "Has a max price drop"
+        "max_price_drop": "Has a max price drop",
+        "insufficient_standing": "Insufficient standing to purchase this item"
       }
     },
     "stock_mode": {
@@ -628,6 +678,10 @@
       "warning": "Warning",
       "error": "Error",
       "success": "Success"
+    },
+    "cooldown": {
+      "order_same_price": "Same Price Cooldown",
+      "order_price_change": "Price Change Cooldown"
     }
   },
   "context": {
@@ -1470,6 +1524,13 @@
                     "tooltip": "Minimum profit to consider for trading",
                     "link": "https://quantframe.app/features/live-trading/settings/item/wts#min-profit"
                   },
+                  "min_profit_percentage": {
+                    "label": "Minimum Profit Percentage (%)",
+                    "placeholder": "Minimum Profit Percentage",
+                    "error": "Invalid minimum profit percentage",
+                    "tooltip": "Minimum profit as a percentage of the purchase price. Both this and Minimum Profit are enforced. Set to -1 to disable.",
+                    "link": "https://quantframe.app/features/live-trading/settings/item/wts#min-profit-percentage"
+                  },
                   "max_price_drop": {
                     "label": "Max Price Drop",
                     "placeholder": "Max Price Drop",
@@ -1531,28 +1592,21 @@
               }
             },
             "syndicate": {
-              "title": "Syndicate 👑 (WIP)",
+              "title": "Syndicate 👑",
               "wts": {
                 "title": "WTS",
+                "add_syndicate_prompt": {
+                  "title": "Add/Edit Syndicate",
+                  "syndicate_label": "Syndicate",
+                  "syndicate_placeholder": "Select syndicate",
+                  "standing_label": "Standing",
+                  "standing_placeholder": "Enter standing",
+                  "add_syndicate_label": "Add/Edit Syndicate"
+                },
                 "fields": {
-                  "max_standing_cost": {
-                    "label": "Max Standing Cost",
-                    "placeholder": "Max Standing Cost",
-                    "tooltip": "Maximum standing cost to consider for trading",
-                    "link": "https://quantframe.app/features/live-trading/settings/item/wts#max-standing-cost"
-                  },
                   "syndicates": {
                     "label": "Syndicates",
                     "placeholder": "Syndicates"
-                  },
-                  "max_rank_for_type": {
-                    "label": "Max Rank for Type",
-                    "placeholder": "Max Rank for Type",
-                    "description": "Maximum rank for the selected syndicate item type",
-                    "options": {
-                      "mod": "Mod",
-                      "arcane": "Arcane"
-                    }
                   },
                   "volume_threshold": {
                     "label": "Volume Threshold",
@@ -1574,6 +1628,29 @@
                     "error": "Invalid min buyers above",
                     "tooltip": "Minimum number of buy orders above your current price to override the Max Price Increase limit. -1 to disable.",
                     "link": "https://quantframe.app/features/live-trading/settings/item/wtb#min-buyers-above"
+                  },
+                  "remove_syndicate": {
+                    "label": "Remove Syndicate",
+                    "placeholder": "Select syndicate"
+                  }
+                },
+                "buttons": {
+                  "clear_tooltip": "Clear Items",
+                  "import_tooltip": "Import Items",
+                  "edit_syndicates_label": "Edit Syndicates {{count}}",
+                  "go_back_label": "Go Back",
+                  "edit_standing_label": "Edit Standing"
+                },
+                "datatable": {
+                  "columns": {
+                    "name": "Name",
+                    "standing": "Total Standing",
+                    "actions": {
+                      "buttons": {
+                        "ignore_standing_tooltip_enabled": "Ignore Standing",
+                        "ignore_standing_tooltip_disabled": "Don't Ignore Standing"
+                      }
+                    }
                   }
                 }
               }
@@ -1667,6 +1744,35 @@
               "buttons": {
                 "export_logs": "Log Export",
                 "clean_notifications": "Clean Notifications"
+              }
+            },
+            "wf_inventory": {
+              "title": "WF Inventory",
+              "fields": {
+                "source": {
+                  "label": "Source",
+                  "description": "Which source to load the inventory from",
+                  "options": {
+                    "none": "None",
+                    "profile": "Profile",
+                    "alecaframe": "Alecaframe"
+                  }
+                },
+                "player_id": {
+                  "label": "Player ID",
+                  "placeholder": "Warframe account player ID",
+                  "tooltip": "Your Warframe account ID used to fetch the profile from api.warframe.com"
+                },
+                "path": {
+                  "label": "Path",
+                  "placeholder": "Path to the AlecaFrame lastData.dat file",
+                  "tooltip": "Leave empty to use the default AlecaFrame data file path"
+                }
+              },
+              "buttons": {
+                "update": "Refresh Inventory",
+                "update_success": "Inventory updated",
+                "update_error": "Failed to update inventory"
               }
             }
           }
@@ -1810,7 +1916,9 @@
               "owned": "Currently Owned",
               "quantity": "Quantity",
               "minimum_sma": "Minimum SMA",
-              "minimum_profit": "Minimum Profit"
+              "minimum_profit": "Minimum Profit",
+              "syndicate": "Syndicate",
+              "standing_cost": "Standing Cost"
             },
             "tooltips": {
               "minimum_price": "The minimum price you are willing to sell this item for. Set to 0 to disable.",
@@ -2233,10 +2341,13 @@
           "title": "Wishlist"
         },
         "syndicate": {
-          "title": "Syndicate 👑 (WIP)",
+          "title": "Syndicate 👑",
+          "buttons": {
+            "import_items_tooltip": "Import Syndicate Items"
+          },
           "datatable": {
             "columns": {
-              "syndicate": "Syndicate",
+              "syndicate_name": "Syndicate",
               "standing_cost": "Standing Cost"
             }
           }

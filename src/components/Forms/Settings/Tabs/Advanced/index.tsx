@@ -5,6 +5,7 @@ import { UseFormReturnType } from "@mantine/form";
 import { useState } from "react";
 import { HttpServerPanel } from "./Tabs/HttpServer";
 import { LogPanel } from "./Tabs/Log";
+import { WFInventoryPanel } from "./Tabs/WFInventory";
 
 export type AdvancedPanelProps = {
   form: UseFormReturnType<TauriTypes.Settings>;
@@ -25,6 +26,11 @@ export const AdvancedPanel = ({ form }: AdvancedPanelProps) => {
       label: useTranslateForm("log.title"),
       component: <LogPanel form={form} />,
       id: "log",
+    },
+    {
+      label: useTranslateForm("wf_inventory.title"),
+      component: <WFInventoryPanel form={form} />,
+      id: "wf_inventory",
     },
   ];
 
