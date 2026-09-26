@@ -32,13 +32,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Use the pushed git tag (v1.6.28.1), not Cargo/npm's 1.6.28+1 SemVer.
+          # Use the pushed git tag (v1.6.28.2), not Cargo/npm's 1.6.28+2 SemVer.
           tagName: ${{ github.ref_name }}
           releaseName: "Kuantframe ${{ github.ref_name }}"
           releaseBody: |
-            Windows installers for **Kuantframe** v1.6.28.1 (Quantframe fork).
+            Windows installers for **Kuantframe** v1.6.28.2 (Quantframe fork).
 
-            App/Cargo version is `1.6.28+1` (valid SemVer). Windows file version and this release tag are **1.6.28.1**.
+            App/Cargo version is `1.6.28+2` (valid SemVer). Windows file version and this release tag are **1.6.28.2**.
 
             ### Download
             - **NSIS** `.exe` installer (recommended)
@@ -47,8 +47,13 @@ jobs:
             Install, then open Kuantframe from the Start Menu / Desktop shortcut.
 
             ### What's new
-            - Discord contact in README and GitHub issue templates
-            - Settings → General: copy official Quantframe save data into Kuantframe (confirm, backup existing data, then restart)
+            Brought in Kenya-DK's unreleased `development` branch, on top of the existing Kuantframe fork:
+            - Syndicate trading pipeline (standing, import, live scraper tab)
+            - Minimum profit percentage for sell orders
+            - Warframe inventory from your profile or AlecaFrame (`lastData.dat`), under Settings → Advanced → WF Inventory
+            - Order cooldown support (left off; `ORDER_COOLDOWN_ENABLED` in the scraper helpers)
+            - Live scraper fixes: per-item unit price, unknown stock status no longer crashes, player names with private-use characters, users activity link
+            - Kuantframe-only pieces stay: separate app data, updater off, Copy Quantframe save, Catppuccin Mocha, Min Buy % of Lowest Sell, scraper speedups
 
             ### Important
             Do **not** run `src-tauri\target\debug\Kuantframe.exe` from a source checkout. That debug build expects Vite on localhost and shows a blank window / `localhost refused to connect`. Use this installer (or `pnpm run tauri:dev` when developing).

@@ -2,14 +2,16 @@ import { ButtonInterval } from "../ButtonInterval";
 
 export type ButtonIntervalsProps = {
   intervals: number[];
+  disabled?: boolean;
   minimum_price?: number;
   OnClick: (interval: number) => void;
 };
 
-export function ButtonIntervals({ intervals, minimum_price, OnClick }: ButtonIntervalsProps) {
+export function ButtonIntervals({ intervals, minimum_price, OnClick, disabled }: ButtonIntervalsProps) {
   return (
     <>
       <ButtonInterval
+        disabled={disabled}
         color="red.7"
         intervals={intervals}
         prefix="-"
@@ -20,6 +22,7 @@ export function ButtonIntervals({ intervals, minimum_price, OnClick }: ButtonInt
         }}
       />
       <ButtonInterval
+        disabled={disabled}
         color="green.7"
         intervals={intervals}
         prefix="+"
@@ -31,4 +34,3 @@ export function ButtonIntervals({ intervals, minimum_price, OnClick }: ButtonInt
     </>
   );
 }
-

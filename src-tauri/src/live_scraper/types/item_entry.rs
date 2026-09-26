@@ -4,11 +4,13 @@ use std::{
 };
 
 use entity::stock_item::Model as StockItemModel;
+use entity::syndicate_item::Model as SyndicateItemModel;
 use entity::wish_list::Model as WishListModel;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use service::{
-    sea_orm::DatabaseConnection, StockItemMutation, StockItemQuery, WishListMutation, WishListQuery,
+    sea_orm::DatabaseConnection, StockItemMutation, StockItemQuery, SyndicateItemMutation,
+    SyndicateItemQuery, WishListMutation, WishListQuery,
 };
 use utils::{get_location, info, Error, LoggerOptions, OperationSet, Properties, SubType};
 use wf_market::{
@@ -65,6 +67,9 @@ pub struct ItemEntry {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wish_list_id: Option<i64>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub syndicate_id: Option<i64>,
+
     #[serde(rename = "wfm_url")]
     pub wfm_url: String,
 
@@ -109,6 +114,7 @@ impl ItemEntry {
     pub fn new(
         stock_id: Option<i64>,
         wish_list_id: Option<i64>,
+        syndicate_id: Option<i64>,
         wfm_url: impl Into<String>,
         wfm_id: impl Into<String>,
         sub_type: Option<SubType>,
@@ -122,6 +128,7 @@ impl ItemEntry {
         Self {
             stock_id,
             wish_list_id,
+            syndicate_id,
             wfm_url: wfm_url.into(),
             wfm_id: wfm_id.into(),
             sub_type,
@@ -249,6 +256,32 @@ impl ItemEntry {
         })
     }
 
+    pub async fn get_syndicate_item_or_error(
+        &self,
+        conn: &DatabaseConnection,
+    ) -> Result<entity::syndicate_item::Model, Error> {
+        let syndicate_id = self.syndicate_id.ok_or_else(|| {
+            Error::new(
+                "ItemEntry:GetSyndicateItem",
+                "Syndicate ID is None",
+                get_location!(),
+            )
+        })?;
+
+        let item = SyndicateItemQuery::find_by_id(conn, syndicate_id)
+            .await
+            .map_err(|e| e.with_location(get_location!()))?;
+
+        item.ok_or_else(|| {
+            Error::new(
+                "ItemEntry:GetSyndicateItem",
+                format!("Syndicate item not found for ID: {}", syndicate_id),
+                get_location!(),
+            )
+            .set_log_level(utils::LogLevel::Warning)
+        })
+    }
+
     pub async fn finalize_stock_item(
         &self,
         conn: &DatabaseConnection,
@@ -268,6 +301,33 @@ impl ItemEntry {
                         send_event!(
                             UIEvent::RefreshStockItems,
                             json!({"id": self.stock_id, "source": component})
+                        );
+                    }
+                }
+                Err(e) => return Err(e.with_location(get_location!())),
+            }
+        }
+        Ok(())
+    }
+    pub async fn finalize_stock_syndicate_item(
+        &self,
+        conn: &DatabaseConnection,
+        component: &str,
+        stock_item: &mut SyndicateItemModel,
+        log_options: &LoggerOptions,
+    ) -> Result<(), Error> {
+        if stock_item.is_dirty {
+            match SyndicateItemMutation::update_by_id(conn, stock_item.to_update()).await {
+                Ok(_) => {
+                    info(
+                        format!("{}SyndicateItemUpdate", component),
+                        &format!("Updated syndicate item: {:?}", self.syndicate_id),
+                        log_options,
+                    );
+                    if stock_item.update_gui() {
+                        send_event!(
+                            UIEvent::RefreshSyndicateItems,
+                            json!({"id": self.syndicate_id, "source": component})
                         );
                     }
                 }
@@ -313,6 +373,7 @@ impl From<&ItemPriceInfo> for ItemEntry {
         Self::new(
             None,
             None,
+            None,
             item.wfm_url.clone(),
             item.wfm_id.clone(),
             item.sub_type.clone(),
@@ -330,6 +391,7 @@ impl From<&StockItemModel> for ItemEntry {
     fn from(item: &StockItemModel) -> Self {
         Self::new(
             Some(item.id),
+            None,
             None,
             item.wfm_url.clone(),
             item.wfm_id.clone(),
@@ -349,6 +411,7 @@ impl From<&entity::wish_list::wish_list::Model> for ItemEntry {
         Self::new(
             None,
             Some(item.id),
+            None,
             item.wfm_url.clone(),
             item.wfm_id.clone(),
             item.sub_type.clone(),
@@ -362,12 +425,13 @@ impl From<&entity::wish_list::wish_list::Model> for ItemEntry {
     }
 }
 
-impl From<&qf_api::types::SyndicateItemPrice> for ItemEntry {
-    fn from(item: &qf_api::types::SyndicateItemPrice) -> Self {
+impl From<&entity::syndicate_item::syndicate_item::Model> for ItemEntry {
+    fn from(item: &entity::syndicate_item::syndicate_item::Model) -> Self {
         Self::new(
             None,
             None,
-            item.wfm_id.clone(),
+            Some(item.id),
+            item.wfm_url.clone(),
             item.wfm_id.clone(),
             item.sub_type.clone(),
             1,
@@ -375,10 +439,7 @@ impl From<&qf_api::types::SyndicateItemPrice> for ItemEntry {
             1,
             vec!["Syndicate".into()],
             "sell",
-            Properties::from(json!({
-                "syndicate": item.syndicate,
-                "standingCost": item.standing_cost,
-            })),
+            Properties::default(),
         )
     }
 }

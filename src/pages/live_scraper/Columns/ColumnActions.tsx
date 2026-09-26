@@ -1,10 +1,14 @@
-import { Group } from "@mantine/core";
-import { faEdit, faEye, faEyeSlash, faFilter, faHammer, faInfo, faPen, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { TauriTypes } from "$types";
 import { ActionWithTooltip } from "@components/Shared/ActionWithTooltip";
+import { Countdown } from "@components/Shared/Countdown";
+import { faClock, faEdit, faEye, faEyeSlash, faFilter, faHammer, faInfo, faPen, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { useTranslateCommon } from "@hooks/useTranslate.hook";
+import { Group } from "@mantine/core";
+import dayjs from "dayjs";
 export type ColumnActionsProps = {
+  cooldown?: TauriTypes.CoolDownInfo;
   i18nKeyOverride?: Record<string, string>;
-  row: { id: number; list_price?: number | undefined; is_hidden: boolean };
+  row: { id: number; list_price?: number | undefined; is_hidden?: boolean; properties?: TauriTypes.StockEntryPropertiesBase };
   loadingRows: string[];
   hideButtons?: string[];
   buttonProps?: { [key: string]: any };
@@ -12,7 +16,7 @@ export type ColumnActionsProps = {
   onAuto: (price: number) => void;
   onInfo: () => void;
   onFilter?: () => void;
-  onHide: (hide: boolean) => void;
+  onHide?: (hide: boolean) => void;
   onDelete: (id: number) => void;
   onEdit?: (id: number) => void;
 };
@@ -42,8 +46,25 @@ export function ColumnActions({
     return !hideButtons.includes(id);
   };
 
+  const showCooldown = row.properties?.cooldown && dayjs().isBefore(dayjs(row.properties.cooldown.end_time));
+
   return (
     <Group gap={5} justify="flex-end">
+      {showCooldown && (
+        <ActionWithTooltip
+          tooltip={
+            <Countdown
+              startDate={new Date(row.properties?.cooldown?.start_time || "")}
+              endDate={new Date(row.properties?.cooldown?.end_time || "")}
+            />
+          }
+          icon={faClock}
+          color={"yellow.7"}
+          actionProps={{ size: "sm" }}
+          iconProps={{ size: "xs" }}
+          onClick={() => {}}
+        />
+      )}
       <ActionWithTooltip
         tooltip={useTranslateButtons("manual_tooltip")}
         icon={faPen}
@@ -107,18 +128,20 @@ export function ColumnActions({
           }}
         />
       )}
-      <ActionWithTooltip
-        tooltip={useTranslateButtons(`hide.${row.is_hidden ? "disabled_tooltip" : "enabled_tooltip"}`)}
-        icon={row.is_hidden ? faEyeSlash : faEye}
-        loading={loadingRows.includes(`${row.id}`)}
-        color={`${row.is_hidden ? "red.7" : "green.7"}`}
-        actionProps={{ size: "sm" }}
-        iconProps={{ size: "xs" }}
-        onClick={async (e) => {
-          e.stopPropagation();
-          onHide(!row.is_hidden);
-        }}
-      />
+      {onHide && (
+        <ActionWithTooltip
+          tooltip={useTranslateButtons(`hide.${row.is_hidden ? "disabled_tooltip" : "enabled_tooltip"}`)}
+          icon={row.is_hidden ? faEyeSlash : faEye}
+          loading={loadingRows.includes(`${row.id}`)}
+          color={`${row.is_hidden ? "red.7" : "green.7"}`}
+          actionProps={{ size: "sm" }}
+          iconProps={{ size: "xs" }}
+          onClick={async (e) => {
+            e.stopPropagation();
+            onHide(!row.is_hidden);
+          }}
+        />
+      )}
       <ActionWithTooltip
         tooltip={useTranslateButtons("delete_tooltip")}
         color={"red.7"}

@@ -1,22 +1,25 @@
+import { PriceHistory, TauriTypes } from "$types";
+import { Countdown } from "@components/Shared/Countdown";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { PriceHistory } from "$types";
 import { useTranslateComponent, useTranslateEnums } from "@hooks/useTranslate.hook";
-import { Group, Popover, Title } from "@mantine/core";
 import { faWarframeMarket } from "@icons";
+import { Group, Popover, Title } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import dayjs from "dayjs";
 import { PriceHistoryListItem } from "../PriceHistoryListItem";
-
 export const PriceHistoryPopover = ({
   histories,
   status,
   size,
+  cooldown,
 }: {
   histories: PriceHistory[] | undefined;
   status: string | undefined;
   size?: "xs" | "sm" | "lg" | "1x" | "2x" | "3x" | "4x";
+  cooldown?: TauriTypes.CoolDownInfo | undefined;
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
-
+  const showCooldown = cooldown && dayjs().isBefore(dayjs(cooldown.end_time));
   return (
     <Popover position="bottom" opened={opened}>
       <Popover.Target>
@@ -27,7 +30,7 @@ export const PriceHistoryPopover = ({
           icon={faWarframeMarket}
           data-stock-status={status || "live"}
           data-color-mode="text"
-          style={{ marginRight: "3px" }}
+          style={{ marginRight: "3px", color: showCooldown ? "var(--mantine-color-yellow-7)" : undefined }}
         />
       </Popover.Target>
       <Popover.Dropdown style={{ pointerEvents: "none" }}>
@@ -39,6 +42,13 @@ export const PriceHistoryPopover = ({
             {useTranslateEnums(`stock_status.${status || "live"}`)}
           </Title>
         </Group>
+        {showCooldown && (
+          <Countdown
+            text={useTranslateEnums(`cooldown.${cooldown.cooldown_type}`)}
+            startDate={new Date(cooldown.start_time || "")}
+            endDate={new Date(cooldown.end_time || "")}
+          />
+        )}
         {(histories || [])
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
           .slice(0, 5)
@@ -49,4 +59,3 @@ export const PriceHistoryPopover = ({
     </Popover>
   );
 };
-

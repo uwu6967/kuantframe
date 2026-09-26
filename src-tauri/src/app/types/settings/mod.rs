@@ -81,3 +81,6 @@ pub use live_syndicate_settings::*;
 
 pub mod live_syndicate_wts_settings;
 pub use live_syndicate_wts_settings::*;
+
+pub mod syndicate_entry_setting;
+pub use syndicate_entry_setting::*;

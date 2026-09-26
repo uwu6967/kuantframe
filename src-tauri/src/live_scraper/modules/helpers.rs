@@ -1,16 +1,20 @@
+use crate::live_scraper::types::cooldown::CooldownInfo;
 use std::{
     collections::HashMap,
     path::Path,
-    sync::{atomic::Ordering, OnceLock},
+    sync::{atomic::Ordering, Mutex, OnceLock},
+    time::Duration,
     vec,
 };
 
+use chrono::{DateTime, Utc};
 use entity::{
     dto::{add_price_history, PriceHistory},
+    enums::StockStatus,
     stock_item::*,
+    syndicate_item::SyndicateItemPaginationQueryDto,
     wish_list::*,
 };
-use qf_api::types::{SyndicateItemPrice, SyndicateItemPricePaginationQueryDto};
 use serde_json::json;
 use service::*;
 use utils::*;
@@ -32,84 +36,15 @@ use crate::{
 
 pub static INTERESTING_ITEMS: OnceLock<HashMap<String, Vec<ItemPriceInfo>>> = OnceLock::new();
 
+const ORDER_COOLDOWN_ENABLED: bool = false; // Set to true to enable order cooldowns, false to disable
+static ORDER_COOL_DOWNS: OnceLock<Mutex<HashMap<String, CooldownInfo>>> = OnceLock::new();
+const ORDER_SAME_PRICE_COOL_DOWN: Duration = Duration::from_secs(20 * 60);
+const ORDER_PRICE_CHANGE_COOL_DOWN: Duration = Duration::from_secs(5 * 60);
+
 pub fn is_disabled(value: i64) -> bool {
     value <= -1
 }
 
-pub async fn get_syndicate_interesting_items(
-    app: &AppState,
-    settings: &SyndicateSettings,
-) -> Result<Vec<SyndicateItemPrice>, Error> {
-    let items = match app
-        .qf_client
-        .syndicate()
-        .get_prices(SyndicateItemPricePaginationQueryDto::new(1, -1))
-        .await
-    {
-        Ok(items) => items.results,
-        Err(e) => {
-            return Err(Error::from_qf(
-                "SyndicateModule:InterestingItems",
-                "Failed to get syndicate items",
-                e,
-                get_location!(),
-            ));
-        }
-    };
-
-    // Dynamic filter using closures
-    let volume_filter = |item: &SyndicateItemPrice| {
-        is_disabled(settings.wts.volume_threshold)
-            || item.volume > settings.wts.volume_threshold as f64
-    };
-    let standing_cost_filter = |item: &SyndicateItemPrice| {
-        is_disabled(settings.wts.max_standing_cost)
-            || item.standing_cost <= settings.wts.max_standing_cost
-    };
-    let types = |item: &SyndicateItemPrice| {
-        if item.sub_type.is_none() || item.sub_type.clone().unwrap().rank.is_none() {
-            return true;
-        }
-        let types = &settings.wts.max_rank_for_type;
-        let sub_type = item.sub_type.as_ref().unwrap();
-        let rank = sub_type.rank.unwrap_or(0);
-
-        if types.contains(&String::from("mod"))
-            || types.contains(&String::from("arcane_enhancement"))
-        {
-            rank > 0
-        } else {
-            rank <= 0
-        }
-    };
-
-    let syndicates = |item: &SyndicateItemPrice| {
-        let syndicates = &settings.wts.syndicates;
-        if syndicates.is_empty() {
-            return true;
-        }
-        syndicates.contains(&item.syndicate_unique_name)
-    };
-    let min_price = |item: &SyndicateItemPrice| {
-        is_disabled(settings.wts.min_price) || item.min_price <= settings.wts.min_price as f64
-    };
-
-    let combined_filter = |item: &SyndicateItemPrice| {
-        volume_filter(item)
-            && standing_cost_filter(item)
-            && types(item)
-            && min_price(item)
-            && syndicates(item)
-    };
-
-    // Filter items based on settings
-    let filtered_items: Vec<SyndicateItemPrice> = items
-        .into_iter()
-        .filter(|item| combined_filter(item))
-        .collect();
-
-    Ok(filtered_items)
-}
 pub fn get_interesting_items(settings: &ItemSettings) -> Vec<ItemPriceInfo> {
     if let Some(items) = INTERESTING_ITEMS.get() {
         if let Some(interesting_items) = items.get(&settings.get_query_id()) {
@@ -338,30 +273,44 @@ pub async fn collect_interesting_items(
 
     // --- Syndicate Mode --- Disabled for now, WIP
     if settings.live_scraper.has_trade_mode(TradeMode::Syndicate) {
-        return Ok(interesting_items.into_values().collect());
         let Ok(_) = app
             .user
             .has_permission(PermissionsFlags::from_str("syndicate_prices_search"))
         else {
             return Ok(interesting_items.into_values().collect());
         };
-
-        let items = get_syndicate_interesting_items(&app, &settings.live_scraper.syndicate)
+        let items = SyndicateItemQuery::get_all(conn, SyndicateItemPaginationQueryDto::new(1, -1))
             .await
             .map_err(|e| e.with_location(get_location!()))?;
-
-        for item in items.into_iter().filter(|item| {
-            !stock_item_settings.general.is_item_blacklisted(
-                &item.wfm_id,
-                &item.sub_type,
-                &TradeMode::Syndicate,
-            )
-        }) {
+        for item in items.results {
             interesting_items
-                .entry(item.uuid.clone())
-                .and_modify(|entry| entry.operations.add("Syndicate".to_string()))
-                .or_insert_with(|| ItemEntry::from(&item));
+                .entry(item.uuid())
+                .and_modify(|entry| {
+                    if entry.sell_quantity == 0 {
+                        entry.sell_quantity = 1;
+                    }
+                    entry.syndicate_id = Some(item.id);
+                    entry.operations.add("Syndicate".to_string());
+                })
+                .or_insert_with(|| ItemEntry::from(&item).set_quantity(OrderType::Sell, 1));
         }
+
+        // let items = get_syndicate_interesting_items(&app, &settings.live_scraper.syndicate)
+        //     .await
+        //     .map_err(|e| e.with_location(get_location!()))?;
+
+        // for item in items.into_iter().filter(|item| {
+        //     !stock_item_settings.general.is_item_blacklisted(
+        //         &item.wfm_id,
+        //         &item.sub_type,
+        //         &TradeMode::Syndicate,
+        //     )
+        // }) {
+        //     interesting_items
+        //         .entry(item.uuid.clone())
+        //         .and_modify(|entry| entry.operations.add("Syndicate".to_string()))
+        //         .or_insert_with(|| ItemEntry::from(&item));
+        // }
     }
     Ok(interesting_items.into_values().collect())
 }
@@ -387,6 +336,7 @@ pub fn get_order_info(
         let order = order.unwrap();
         let mut properties = order.properties;
         properties.set_property_value("id", order.id.clone());
+        properties.set_property_value("old_price", order.platinum);
         properties.set_property_value("original_update_string", format!("p:{}", order.platinum));
         (
             order.id.clone(),
@@ -551,6 +501,56 @@ async fn handler_wfm_error(
     err
 }
 
+pub fn get_cooldown(new: &Properties) -> CooldownInfo {
+    let current_cooldown = new.get_property_value("cooldown", CooldownInfo::default());
+    current_cooldown
+}
+pub fn set_cooldown(current: &mut Properties, new: &Properties) -> (bool, CooldownInfo) {
+    let current_cooldown = get_cooldown(current);
+    let new_cooldown = get_cooldown(new);
+    if current_cooldown.start_time != new_cooldown.start_time {
+        current.set_property_value("cooldown", new_cooldown.clone());
+        return (true, new_cooldown);
+    }
+    (false, current_cooldown)
+}
+fn is_order_on_cooldown(
+    order_id: impl Into<String>,
+    old_price: u32,
+    new_price: u32,
+) -> Option<CooldownInfo> {
+    if !ORDER_COOLDOWN_ENABLED {
+        return None;
+    }
+    let order_id = order_id.into();
+    let now = Utc::now();
+
+    let (cooldown_type, duration) = if old_price == new_price {
+        ("order_same_price", ORDER_SAME_PRICE_COOL_DOWN)
+    } else {
+        ("order_price_change", ORDER_PRICE_CHANGE_COOL_DOWN)
+    };
+    // Start a new cooldown
+    let cooldown = CooldownInfo::new(order_id, now, cooldown_type, duration);
+    let key = cooldown.key();
+
+    let cooldowns = ORDER_COOL_DOWNS.get_or_init(|| Mutex::new(HashMap::new()));
+    let mut cooldowns = cooldowns.lock().unwrap();
+
+    // Check existing cooldown
+    if let Some(cooldown) = cooldowns.get(&key) {
+        if cooldown.remaining().is_some() {
+            return Some(cooldown.clone());
+        }
+
+        // Cooldown has expired
+        cooldowns.remove(&key);
+    }
+
+    cooldowns.insert(key, cooldown);
+
+    None
+}
 pub async fn progress_order(
     component: &str,
     entry: &ItemEntry,
@@ -566,6 +566,7 @@ pub async fn progress_order(
     let quantity = entry.get_quantity(order_type);
     // Fetch properties data
     let order_id = properties.get_property_value("id", String::new());
+    let old_price = properties.get_property_value("old_price", 0u32);
     let name = properties.get_property_value("name", String::new());
     let update_string = properties.get_property_value("update_string", String::new());
     let original_update_string =
@@ -611,6 +612,25 @@ pub async fn progress_order(
             }
         }
     } else if trade_operations.has("Update") && !trade_operations.has("Delete") {
+        if let Some(info) = is_order_on_cooldown(&order_id, old_price, post_price) {
+            properties.set_property_value("cooldown", info.clone());
+            wfm_client.order().cache_orders_mut().update(
+                order_id,
+                UpdateOrderParams::new().with_properties(json!(properties.properties)),
+            );
+            return Err(Error::new(
+                format!("{}:Cooldown", component),
+                format!(
+                    "Order for item {} is on cooldown ({}). Skipping update.",
+                    name,
+                    info.format_remaining()
+                ),
+                get_location!(),
+            )
+            .with_cause("CooldownError")
+            .with_context(json!({"cooldown": info})));
+        }
+
         match wfm_client
             .order()
             .update(
@@ -680,7 +700,7 @@ pub async fn progress_order(
     } else {
         warning(
             format!("{}Skip", component),
-            &format!("Item {} is not optimal for buying. Skipping.", name),
+            &format!("Item {} has no trade operations. Skipping.", name),
             &log_options,
         );
     }
@@ -709,6 +729,7 @@ pub async fn delete_order(
 pub fn log_summary(component: &str, message: impl AsRef<str>, options: &LoggerOptions) {
     info(format!("{}Summary", component), message.as_ref(), options);
 }
+
 pub async fn fetch_and_cache_orders(
     component: &str,
     wfm_client: &wf_market::Client<wf_market::Authenticated>,
@@ -794,5 +815,13 @@ pub fn should_apply_max_price_drop(
         Some("MaxPriceDrop".to_string())
     } else {
         None
+    }
+}
+
+pub fn minimum_profit_threshold(bought_price: i64, flat_profit: i64, percentage: i64) -> i64 {
+    if is_disabled(percentage) {
+        flat_profit
+    } else {
+        flat_profit.max(bought_price.saturating_mul(percentage).saturating_add(99) / 100)
     }
 }

@@ -1,6 +1,6 @@
-import { TauriClient } from "..";
 import { TauriTypes } from "$types";
 import { useQuery } from "@tanstack/react-query";
+import { TauriClient } from "..";
 
 export class AppModule {
   constructor(private readonly client: TauriClient) {}

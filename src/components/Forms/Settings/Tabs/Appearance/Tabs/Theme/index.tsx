@@ -1,5 +1,5 @@
 import { TauriTypes } from "$types";
-import api from "@api/index";
+import api, { AddMetric } from "@api/index";
 import { ThemePreview } from "@components/DataDisplay/ThemePreview";
 import { LiveThemeEditor } from "@components/ThemeEditor";
 import { catppuccinMochaTheme, defaultTheme } from "@contexts/static";
@@ -47,7 +47,10 @@ export const ThemePanel = ({}: ThemePanelProps) => {
             theme={theme.properties}
             name={theme.name}
             author={theme.author}
-            onClick={() => switchTheme(theme.properties)}
+            onClick={() => {
+              AddMetric("switch_theme", { success: "true", theme: theme.name, author: theme.author });
+              switchTheme(theme.properties);
+            }}
           />
         ))}
       </Flex>

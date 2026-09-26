@@ -72,7 +72,7 @@ export function OverviewTab({ value }: OverviewTabProps) {
         </Box>
         <Flex direction="column">
           <Group gap={3}>
-            <PriceHistoryPopover histories={GetProperty("price_history")} status={value.status} size="2x" />
+            <PriceHistoryPopover cooldown={GetProperty("cooldown")} histories={GetProperty("price_history")} status={value.status} size="2x" />
             <ItemName
               hideQuantity
               value={value}
@@ -149,4 +149,3 @@ export function OverviewTab({ value }: OverviewTabProps) {
     </Group>
   );
 }
-

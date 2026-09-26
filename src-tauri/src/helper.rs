@@ -20,6 +20,7 @@ use crate::{
     cache::{
         derive_riven_summary_attributes, grade_riven, scale_attributes, CacheState, CacheWeaponBase,
     },
+    live_scraper::get_cooldown,
     utils::{auction_list_ext::AuctionWithOwnerListExt, ErrorFromExt, OrderListExt, SubTypeExt},
     APP, DATABASE,
 };
@@ -224,7 +225,6 @@ pub async fn populate_item_market_properties(
             }
         });
         operations.merge(&order_operations);
-
         (order.platinum as i64, order.properties.clone())
     } else {
         (
@@ -304,9 +304,9 @@ pub async fn populate_item_market_properties(
         properties.set_property_value("orders", orders.take_top(5, order_type));
     }
     // ----------------- Market Populated Info -----------------
-    if operations.has("MarketPopulated") {
-        properties.merge_properties(order_properties.properties, true, true);
-    }
+    properties.merge_properties(order_properties.properties, true, true);
+
+    // ----------------- Operations Info -----------------
     properties.set_property_value("ui_operations", operations.operations.clone());
     Ok(())
 }

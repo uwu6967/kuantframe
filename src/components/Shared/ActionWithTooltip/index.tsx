@@ -1,9 +1,9 @@
-import { Tooltip, ActionIcon, MantineColor, ActionIconProps } from "@mantine/core";
-import { FontAwesomeIcon, FontAwesomeIconProps } from "@fortawesome/react-fontawesome";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { FontAwesomeIcon, FontAwesomeIconProps } from "@fortawesome/react-fontawesome";
+import { ActionIcon, ActionIconProps, MantineColor, Tooltip } from "@mantine/core";
 export type ActionWithTooltipProps = {
   color?: MantineColor;
-  tooltip?: string;
+  tooltip?: string | React.ReactNode;
   width?: number;
   icon: IconProp;
   loading?: boolean;
@@ -21,4 +21,3 @@ export function ActionWithTooltip({ width, loading, iconProps, actionProps, tool
     </Tooltip>
   );
 }
-

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use utils::Properties;
 use utils::SubType;
 
-pub static ALLOWED_PROPERTIES_FIELDS: &[&str] = &["min_sma", "min_profit", "min_price"];
+pub static ALLOWED_PROPERTIES_FIELDS: &[&str] = &["min_sma", "min_profit", "min_price", "cooldown"];
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "stock_item")]
@@ -97,7 +97,7 @@ impl Model {
         }
         false
     }
-    fn add_change(&mut self, field: &str) {
+    pub fn add_change(&mut self, field: &str) {
         if !self.changes.contains(&field.to_string()) {
             self.changes.push(field.to_string());
         }
@@ -151,6 +151,6 @@ impl Model {
         }
     }
     pub fn update_gui(&self) -> bool {
-        self.has_change("list_price") || self.has_change("status")
+        self.has_change("list_price") || self.has_change("status") || self.has_change("cooldown")
     }
 }

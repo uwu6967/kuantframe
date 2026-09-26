@@ -1,14 +1,14 @@
+import { SearchField } from "@components/Forms/SearchField";
+import { faAdd } from "@fortawesome/free-solid-svg-icons";
 import { Box, Group, Stack } from "@mantine/core";
+import { paginate } from "@utils/helper";
 import { DataTable, DataTableColumn, DataTableSortStatus } from "mantine-datatable";
 import { useMemo, useState } from "react";
-import { paginate } from "@utils/helper";
-import { SearchField } from "@components/Forms/SearchField";
-import classes from "./GenericItemList.module.css";
+import { useTranslateForms } from "../../../hooks/useTranslate.hook";
 import { ApplyFilter, ComplexFilter } from "../../../utils/filter.helper";
 import { SortItems } from "../../../utils/sorting.helper";
 import { ActionWithTooltip } from "../../Shared/ActionWithTooltip";
-import { faAdd } from "@fortawesome/free-solid-svg-icons";
-import { useTranslateForms } from "../../../hooks/useTranslate.hook";
+import classes from "./GenericItemList.module.css";
 
 export type GenericItemListProps<T> = {
   items: T[];
@@ -23,9 +23,12 @@ export type GenericItemListProps<T> = {
   searchValue?: string;
   onSearchChange?: (val: string) => void;
   onSearch?: (val: string) => void;
+  onCreate?: () => void;
   searchFilter?: React.ReactNode;
   searchRightSectionWidth?: number;
   searchRightSection?: React.ReactNode;
+  // onCellClick
+  onCellClick?: (item: T, column: DataTableColumn<T>) => void;
   filter?: ComplexFilter;
 };
 
@@ -40,6 +43,7 @@ export function GenericItemList<T>({
   searchValue,
   onSearchChange,
   onSearch,
+  onCreate,
   searchFilter,
   searchRightSection,
   searchRightSectionWidth,
@@ -78,6 +82,7 @@ export function GenericItemList<T>({
           value={searchValue ?? ""}
           onChange={onSearchChange ?? (() => {})}
           onSearch={onSearch}
+          onCreate={onCreate}
           rightSection={
             <Group gap={4}>
               {searchRightSection}
@@ -119,4 +124,3 @@ export function GenericItemList<T>({
     </Stack>
   );
 }
-

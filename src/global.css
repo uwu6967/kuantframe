@@ -120,6 +120,10 @@
   --color: var(--qf-stock-status-max_price_drop);
 }
 
+[data-stock-status="insufficient_standing"] {
+  --color: var(--qf-stock-status-insufficient_standing);
+}
+
 [data-alert-type="error"] {
   --color: var(--qf-alert-type-error);
 }

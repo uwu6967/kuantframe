@@ -27,7 +27,7 @@ export namespace TauriTypes {
     OnError = "App:Error",
     OnStartingUp = "App:StartingUp",
     UpdateUser = "User:Update",
-    RefreshSettings = "Settings:Refresh",
+    RefreshSettings = "App:Settings:Refresh",
     UpdateLiveScraperRunningState = "LiveScraper:UpdateRunningState",
     OnLiveScraperMessage = "LiveScraper:OnMessage",
     RefreshCache = "Cache:Refresh",
@@ -35,6 +35,7 @@ export namespace TauriTypes {
     RefreshStockRiven = "LiveScraper:RefreshStockRiven",
     RefreshWishListItems = "LiveScraper:RefreshWishListItems",
     RefreshStockRivens = "LiveScraper:RefreshStockRivens",
+    RefreshSyndicateItems = "LiveScraper:RefreshSyndicateItems",
     RefreshWfmOrders = "LiveScraper:RefreshWfmOrders",
     OnDeleteWfmOrders = "Wfm:OnDeleteOrders",
     RefreshWfmAuctions = "LiveScraper:RefreshWfmAuctions",
@@ -60,6 +61,7 @@ export namespace TauriTypes {
     Overpriced = "overpriced",
     Underpriced = "underpriced",
     MaxPriceDrop = "max_price_drop",
+    InsufficientStanding = "insufficient_standing",
   }
   export enum TransactionType {
     Purchase = "purchase",
@@ -79,6 +81,23 @@ export namespace TauriTypes {
     variant?: string;
     amber_stars?: number;
     cyan_stars?: number;
+  }
+  export interface RustDuration {
+    nanos: number;
+    secs: number;
+  }
+  export interface SubType {
+    rank?: number;
+    variant?: string;
+    amber_stars?: number;
+    cyan_stars?: number;
+  }
+  export interface CoolDownInfo {
+    id: string;
+    duration: RustDuration;
+    cooldown_type: string;
+    start_time: Date;
+    end_time: Date;
   }
 
   //--------------------------------------------------------------------------------
@@ -111,7 +130,14 @@ export namespace TauriTypes {
     delete_conflicting_orders: boolean;
   }
   export interface WFInventorySettings {
-    inv_path: string;
+    source: WFInventorySource;
+  }
+  export type WFInventorySource = "None" | { Profile: WFInvProfileSource } | { Alecaframe: WFInvAlecaframeSource };
+  export interface WFInvProfileSource {
+    id: string;
+  }
+  export interface WFInvAlecaframeSource {
+    path: string;
   }
   export interface LogSettings {
     ee_log_path: string;
@@ -138,12 +164,16 @@ export namespace TauriTypes {
     max_price: number;
   }
   export interface SyndicateWtsSettings {
-    max_standing_cost: number;
-    syndicates: string[];
-    max_rank_for_type: string[];
+    syndicates: SyndicateEntrySetting[];
     volume_threshold: number;
     max_price_drop: number;
     min_listings_below: number;
+  }
+  export interface SyndicateEntrySetting {
+    name: string;
+    unique_name: string;
+    standing: number;
+    ignore_standing: boolean;
   }
   export interface ItemWtbSettings {
     volume_threshold: number;
@@ -164,6 +194,7 @@ export namespace TauriTypes {
   export interface ItemWtsSettings {
     min_sma: number;
     min_profit: number;
+    min_profit_percentage: number;
     max_price_drop: number;
     min_listings_below: number;
   }
@@ -453,6 +484,7 @@ export namespace TauriTypes {
     max_price?: number;
     min_profit?: number;
     min_sma?: number;
+    cooldown?: CoolDownInfo;
     [key: string]: any;
   }
   export interface StockEntryBase<T = any> {
@@ -497,6 +529,40 @@ export namespace TauriTypes {
     wfm_url: string;
     sub_type?: SubType;
     quantity: number;
+    price: number;
+  }
+  export interface SyndicateItem<T = StockEntryPropertiesBase> {
+    id: number;
+    list_price?: number;
+    sub_type?: SubType;
+    status: StockStatus;
+    created_at: string;
+    updated_at: string;
+    price_history: PriceHistory[];
+    properties: T;
+    item_name: string;
+    item_unique_name: string;
+    owned: number;
+    syndicate_name: string;
+    syndicate_unique_name: string;
+    standing_cost: number;
+    wfm_id: string;
+    wfm_url: string;
+  }
+  export interface UpdateSyndicateItem {
+    id: number;
+    owned?: number;
+    list_price?: number;
+    status?: StockStatus;
+    syndicate?: string;
+    standing_cost?: number;
+    properties?: StockEntryPropertiesBase;
+  }
+  export interface SellSyndicateItem {
+    id?: number;
+    wfm_url: string;
+    rawSyndicate: string;
+    sub_type?: SubType;
     price: number;
   }
   export interface StockRiven<T = StockEntryPropertiesBase> extends StockEntryBase<T> {
@@ -908,6 +974,15 @@ export namespace TauriTypes {
       price?: number;
     }>[];
   };
+  export type WFInvSyndicateControllerGetListData = PaginatedDto & {
+    results?: WFInvItemBase<{
+      background_colour: string;
+      colour: string;
+      max_standing: number;
+      min_standing: number;
+      total: number;
+    }>[];
+  };
 
   //--------------------------------------------------------------------------------
   //  EE Log
@@ -944,6 +1019,18 @@ export namespace TauriTypes {
   }
   export type StockItemControllerGetListData = PaginatedDto & {
     results?: StockItem[];
+  };
+  export interface SyndicateItemControllerGetListParams {
+    page: number;
+    limit: number;
+    sort_by?: string;
+    sort_direction?: "asc" | "desc";
+    query?: string;
+    status?: StockStatus;
+    syndicate?: string;
+  }
+  export type SyndicateItemControllerGetListData = PaginatedDto & {
+    results?: SyndicateItem[];
   };
   export interface StockRivenControllerGetListParams {
     page: number;

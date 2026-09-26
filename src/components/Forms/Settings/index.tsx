@@ -98,4 +98,3 @@ export function SettingsForm({ onSubmit, value }: SettingsFormProps) {
     </Container>
   );
 }
-

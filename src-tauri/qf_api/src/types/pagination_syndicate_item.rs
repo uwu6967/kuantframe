@@ -21,6 +21,10 @@ pub struct SyndicateItemPricePaginationQueryDto {
     #[serde(default)]
     pub volume_lt: FieldChange<i64>,
     #[serde(default)]
+    pub min_price_gt: FieldChange<i64>,
+    #[serde(default)]
+    pub min_price_lt: FieldChange<i64>,
+    #[serde(default)]
     pub standing_cost_gt: FieldChange<i64>,
     #[serde(default)]
     pub standing_cost_lt: FieldChange<i64>,
@@ -38,6 +42,8 @@ impl SyndicateItemPricePaginationQueryDto {
             volume_lt: FieldChange::Ignore,
             standing_cost_gt: FieldChange::Ignore,
             standing_cost_lt: FieldChange::Ignore,
+            min_price_gt: FieldChange::Ignore,
+            min_price_lt: FieldChange::Ignore,
             syndicates: FieldChange::Ignore,
         }
     }
@@ -64,6 +70,14 @@ impl SyndicateItemPricePaginationQueryDto {
         }
         match &self.volume_lt {
             Value(v) => query.push(format!("volumeLt={}", v)),
+            _ => {}
+        }
+        match &self.min_price_gt {
+            Value(v) => query.push(format!("minPriceGt={}", v)),
+            _ => {}
+        }
+        match &self.min_price_lt {
+            Value(v) => query.push(format!("minPriceLt={}", v)),
             _ => {}
         }
         match &self.standing_cost_gt {

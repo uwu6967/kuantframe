@@ -2,7 +2,7 @@ use sea_orm::sea_query::ValueType;
 use sea_orm::{TryGetError, TryGetable, Value, sea_query};
 use serde::{Deserialize, Serialize};
 
-use crate::{LoggerOptions, critical};
+use crate::{LoggerOptions, critical, info};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default)]
 pub struct Properties {
@@ -50,8 +50,10 @@ impl Properties {
                     critical(
                         format!("{}:GetPropertyValue", "Properties"),
                         format!(
-                            "Failed to deserialize property '{}' with value: {:?}",
-                            key, value
+                            "Failed to deserialize property '{}' with value: {:?} into type {}",
+                            key,
+                            value,
+                            std::any::type_name::<T>(),
                         ),
                         &LoggerOptions::default(),
                     );
@@ -156,9 +158,46 @@ impl Properties {
     }
     pub fn nullify_zeroed_properties(&mut self, keys: &[&str]) {
         for key in keys {
-            let num: f64 = self.get_property_value(*key, f64::default());
-            if num == 0.0 && self.has_property(*key) {
-                self.set_property_value(*key, serde_json::Value::Null);
+            if self.is_type::<f64>(*key) {
+                let num: f64 = self.get_property_value(*key, f64::default());
+                if num == 0.0 && self.has_property(*key) {
+                    self.set_property_value(*key, serde_json::Value::Null);
+                }
+            } else if self.is_type::<i64>(*key) {
+                let num: i64 = self.get_property_value(*key, i64::default());
+                if num == 0 && self.has_property(*key) {
+                    self.set_property_value(*key, serde_json::Value::Null);
+                }
+            } else if self.is_type::<i32>(*key) {
+                let num: i32 = self.get_property_value(*key, i32::default());
+                if num == 0 && self.has_property(*key) {
+                    self.set_property_value(*key, serde_json::Value::Null);
+                }
+            } else if self.is_type::<u64>(*key) {
+                let num: u64 = self.get_property_value(*key, u64::default());
+                if num == 0 && self.has_property(*key) {
+                    self.set_property_value(*key, serde_json::Value::Null);
+                }
+            } else if self.is_type::<String>(*key) {
+                let s: String = self.get_property_value(*key, String::default());
+                if s.is_empty() && self.has_property(*key) {
+                    self.set_property_value(*key, serde_json::Value::Null);
+                }
+            } else if self.is_type::<Vec<serde_json::Value>>(*key) {
+                let v: Vec<serde_json::Value> = self.get_property_value(*key, Vec::default());
+                if v.is_empty() && self.has_property(*key) {
+                    self.set_property_value(*key, serde_json::Value::Null);
+                }
+            } else {
+                // For other types, you can add more checks as needed
+                info(
+                    format!("{}:NullifyZeroedProperties", "Properties"),
+                    format!(
+                        "Property '{}' is of an unsupported type for nullification.",
+                        key
+                    ),
+                    &LoggerOptions::default(),
+                );
             }
         }
     }

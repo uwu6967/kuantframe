@@ -9,3 +9,6 @@ pub use wish_list::*;
 
 pub mod stock_riven;
 pub use stock_riven::*;
+
+pub mod syndicate_item;
+pub use syndicate_item::*;
