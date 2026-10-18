@@ -7,10 +7,9 @@ use std::{
     vec,
 };
 
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use entity::{
     dto::{add_price_history, PriceHistory},
-    enums::StockStatus,
     stock_item::*,
     syndicate_item::SyndicateItemPaginationQueryDto,
     wish_list::*,
@@ -24,7 +23,7 @@ use wf_market::{
 };
 
 use crate::{
-    app::{AppState, ItemSettings, Settings, SyndicateSettings},
+    app::{AppState, ItemSettings, Settings},
     cache::types::{CacheTradableItem, ItemPriceInfo},
     enums::*,
     live_scraper::*,
@@ -482,6 +481,13 @@ async fn handler_wfm_error(
                 .cache_orders_mut()
                 .apply_trade_info()
                 .ok();
+            if let Ok(cache) = states::cache_client() {
+                wfm_client
+                    .order()
+                    .cache_orders_mut()
+                    .restore_missing_item_info(&cache)
+                    .ok();
+            }
             trace(
                 format!("{}:{}", component, action),
                 "Refreshed cached orders due to order limit exceeded",
@@ -756,12 +762,19 @@ pub async fn fetch_and_cache_orders(
     Ok(orders)
 }
 
-pub fn get_per_trade(item_info: &CacheTradableItem) -> Option<i64> {
-    if item_info.bulk_tradable {
-        Some(1)
-    } else {
-        None
+pub fn get_per_trade(bulk_tradable: bool, quantity: i64, is_bulk: bool) -> Option<i64> {
+    if !bulk_tradable {
+        return None;
     }
+
+    if !is_bulk {
+        return Some(1);
+    }
+
+    let max_per_trade = quantity.clamp(1, 6);
+    (1..=max_per_trade)
+        .rev()
+        .find(|per_trade| quantity % per_trade == 0)
 }
 
 pub fn is_blacklisted(

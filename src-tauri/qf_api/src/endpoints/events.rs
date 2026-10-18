@@ -8,7 +8,7 @@ use tokio::runtime::Runtime;
 use tokio::sync::Mutex as AsyncMutex;
 use utils::{LoggerOptions, error, info, warning};
 
-use crate::{client::Client, enums::ResponseFormat, errors::ApiError, types::*};
+use crate::{SENSITIVE_FIELDS, client::Client, enums::ResponseFormat, errors::ApiError, types::*};
 
 const EVENT_BATCH_SIZE: usize = 50;
 const EVENT_FLUSH_INTERVAL: Duration = Duration::from_secs(10);
@@ -55,6 +55,12 @@ impl EventsRoute {
     /// from any thread, including outside of a tokio runtime context.
     pub fn track_event(&self, dto: CreateEventDto) {
         self.queue.lock().unwrap().push(dto);
+    }
+
+    /// Immediately flushes all queued events. Used on shutdown so events
+    /// (e.g. `app_exit`) are sent before the process ends.
+    pub async fn flush_now(&self) -> Result<(), ApiError> {
+        self.flush().await
     }
 
     async fn flush(&self) -> Result<(), ApiError> {
@@ -146,7 +152,8 @@ impl EventsRoute {
             loop {
                 interval.tick().await;
 
-                if let Err(e) = route.flush().await {
+                if let Err(mut e) = route.flush().await {
+                    e.mask_sensitive_data(SENSITIVE_FIELDS);
                     error(
                         "Events:Flush",
                         format!("Flush failed: {:?}", e),

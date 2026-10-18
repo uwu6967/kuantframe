@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    sync::{LazyLock, Mutex},
+    sync::Mutex,
 };
 
 use crate::{
@@ -14,12 +14,11 @@ use crate::{
     notify_gui, send_event, track_event,
     types::*,
     utils::{modules::states, SubTypeExt},
-    APP,
 };
 use entity::enums::TransactionType;
 use qf_api::enums::app_events::ApplicationEvent as EventType;
 use serde_json::json;
-use tauri::{Emitter, Listener, Manager};
+use tauri::{Emitter, Listener};
 use utils::*;
 use wf_market::enums::OrderType;
 //----------------------------
@@ -432,9 +431,10 @@ async fn process_mutable_items(
             .map(|order| order.platinum)
             .unwrap_or(0);
         item.properties.set_property_value("price", json!(price));
-        let is_wish_list_item = is_wish_list_item(info.wfm_url, &item.sub_type)
-            .await
-            .map_err(|e| e.with_location(get_location!()))?;
+        let is_wish_list_item = order_type == OrderType::Buy
+            && is_wish_list_item(info.wfm_url, &item.sub_type)
+                .await
+                .map_err(|e| e.with_location(get_location!()))?;
         item.properties
             .set_property_value("isWishListItem", json!(is_wish_list_item));
     }
@@ -488,9 +488,9 @@ fn process_operations(trade: &PlayerTrade, operations: OperationSet) {
     let (refresh_db, notify_type, notify_color) = if operations.has("AutoTrade") {
         if operations.has("MultipleItems") {
             (None, "multiple_items", "yellow")
-        } else if operations.has("StockRiven_Deleted") {
+        } else if operations.contains("StockRiven_") && !operations.has("StockRiven_NotFound") {
             (Some(UIEvent::RefreshStockRivens), "success", "green.7")
-        } else if !operations.has("WishListItemBought_NotFound") {
+        } else if operations.any(&["WishListItemBought_Deleted", "WishListItemBought_Updated"]) {
             (Some(UIEvent::RefreshWishListItems), "success", "green.7")
         } else if operations.any(&[
             "ItemSell_Deleted",
@@ -604,21 +604,23 @@ async fn process_trade_item(
     }
 
     // Handle Wish List
-    let (op, model) = handle_wish_list(
-        &item.unique_name,
-        &item.sub_type,
-        item.quantity,
-        platinum,
-        player_name,
-        OrderType::Buy,
-        &OperationSet::from(vec!["ReturnOn:NotFound", ""]),
-    )
-    .await
-    .map_err(|e| e.with_location(get_location!()))?;
-    operations.merge(&op);
-    if !op.has("WishListItemBought_NotFound") {
-        operations.add(format!("Name: {}", model.item_name));
-        return Ok(operations);
+    if order_type == OrderType::Buy {
+        let (op, model) = handle_wish_list(
+            &item.unique_name,
+            &item.sub_type,
+            item.quantity,
+            platinum,
+            player_name,
+            OrderType::Buy,
+            &OperationSet::from(vec!["ReturnOn:NotFound"]),
+        )
+        .await
+        .map_err(|e| e.with_location(get_location!()))?;
+        operations.merge(&op);
+        if !op.has("WishListItemBought_NotFound") {
+            operations.add(format!("Name: {}", model.item_name));
+            return Ok(operations);
+        }
     }
 
     // Handle Stock Items

@@ -1,20 +1,20 @@
 ## Features
 
-- ✨ Brought in upstream Quantframe `development`: syndicate trading, minimum sell-profit percentage, and Warframe inventory from profile or AlecaFrame.
-- ⏰ Order cooldown from upstream is included and left off (`ORDER_COOLDOWN_ENABLED`).
+- ✨ Bulk quantities on stock and the wish list, with a per-trade badge on the list price.
+- ✨ Warframe inventory can come from a plain JSON file, next to profile and AlecaFrame.
+- ✨ Trading Analytics transactions have a chart (revenue, expenses, running profit) and a date range.
 
 ## Fixes
 
-- 🛠️ Live scraper records the per-item unit price.
-- 🛠️ Unrecognized stock status values fall back to Unknown instead of crashing.
-- 🛠️ Private-use characters are stripped from player names.
-- 🛠️ Users activity uses the correct endpoint.
-
-## Refactors
+- 🛠️ The ban screen shows when the account is banned.
+- 🛠️ API error logs hide passwords, tokens, and webhooks.
+- 🛠️ Trades were written twice. Purchases land in stock once.
+- 🛠️ Selling an item that is also on the wish list no longer deletes the wish list row. Empty sub-types match. Process Trade saves the full price. (Tom-Hartmann, upstream PR #132)
+- 🛠️ Live-scraper refetches no longer turn orders into "Unknown Item". (ponpoko094, upstream PR #130)
 
 ## Dev Notes
 
-- App version is `1.6.28+2`. Release tag is `v1.6.28.2`.
+- App version is `1.6.28+3`. Release tag is `v1.6.28.3`. Windows file version is 1.6.28.3.
 
 ## Icons
 

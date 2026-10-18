@@ -1,11 +1,11 @@
-use entity::{dto::*, enums::*, wish_list::*};
+use entity::{enums::*, wish_list::*};
 use service::{WishListMutation, WishListQuery};
 use std::vec;
 use utils::SubType;
 use utils::{get_location, info, warning, Error, OperationSet};
 use wf_market::enums::OrderType;
 
-use crate::{handlers::*, types::*, utils::*, DATABASE};
+use crate::{handlers::*, utils::*, DATABASE};
 
 // --------------------------------------------------
 // Helper functions.
@@ -219,7 +219,7 @@ pub async fn handle_wish_list_by_entity(
         tx.transaction_type = TransactionType::Sale;
     }
 
-    handle_transaction(tx, &operations)
+    handle_transaction(tx, flags)
         .await
         .map_err(|e| e.with_location(get_location!()).log(file))?;
 

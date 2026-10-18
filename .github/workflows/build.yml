@@ -32,28 +32,33 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Use the pushed git tag (v1.6.28.2), not Cargo/npm's 1.6.28+2 SemVer.
+          # Use the pushed git tag (v1.6.28.3), not Cargo/npm's 1.6.28+3 SemVer.
           tagName: ${{ github.ref_name }}
           releaseName: "Kuantframe ${{ github.ref_name }}"
           releaseBody: |
-            Windows installers for **Kuantframe** v1.6.28.2 (Quantframe fork).
+            Windows installers for **Kuantframe** v1.6.28.3 (Quantframe fork).
 
-            App/Cargo version is `1.6.28+2` (valid SemVer). Windows file version and this release tag are **1.6.28.2**.
+            App/Cargo version is `1.6.28+3` (valid SemVer). Windows file version and this release tag are **1.6.28.3**.
 
             ### Download
-            - **NSIS** `.exe` installer (recommended)
-            - **MSI** installer if you prefer
+            - **NSIS** `.exe` installer (recommended): `Kuantframe_1.6.28+3_x64-setup.exe`
+            - **MSI** installer if you prefer: `Kuantframe_1.6.28+3_x64_en-US.msi`
 
             Install, then open Kuantframe from the Start Menu / Desktop shortcut.
 
+            Windows SmartScreen may warn because the installer isn't signed. More info, then Run anyway, if you trust this repo.
+
             ### What's new
-            Brought in Kenya-DK's unreleased `development` branch, on top of the existing Kuantframe fork:
-            - Syndicate trading pipeline (standing, import, live scraper tab)
-            - Minimum profit percentage for sell orders
-            - Warframe inventory from your profile or AlecaFrame (`lastData.dat`), under Settings → Advanced → WF Inventory
-            - Order cooldown support (left off; `ORDER_COOLDOWN_ENABLED` in the scraper helpers)
-            - Live scraper fixes: per-item unit price, unknown stock status no longer crashes, player names with private-use characters, users activity link
-            - Kuantframe-only pieces stay: separate app data, updater off, Copy Quantframe save, Catppuccin Mocha, Min Buy % of Lowest Sell, scraper speedups
+            I pulled in Quantframe 1.6.29 and 1.6.30, and two trade fixes that are still open upstream.
+            - Bulk quantities on stock and the wish list
+            - A plain JSON file as a Warframe inventory source (Settings → Advanced → WF Inventory)
+            - A chart on Trading Analytics → Transactions
+            - The ban screen shows when the account is banned
+            - API error logs hide passwords, tokens, and webhooks
+            - Trades were being saved twice. Purchases land in stock once
+            - Selling something that is also on your wish list no longer deletes the wish list row (Tom-Hartmann, upstream PR #132)
+            - Order cards stay filled in after the live scraper refetches them (ponpoko094, upstream PR #130)
+            - Kuantframe-only pieces stay: separate app data (`dev.kuantframe`), updater off, Copy Quantframe save, Catppuccin Mocha, Min Buy % of Lowest Sell, scraper speedups
 
             ### Important
             Do **not** run `src-tauri\target\debug\Kuantframe.exe` from a source checkout. That debug build expects Vite on localhost and shows a blank window / `localhost refused to connect`. Use this installer (or `pnpm run tauri:dev` when developing).

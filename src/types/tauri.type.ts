@@ -132,11 +132,14 @@ export namespace TauriTypes {
   export interface WFInventorySettings {
     source: WFInventorySource;
   }
-  export type WFInventorySource = "None" | { Profile: WFInvProfileSource } | { Alecaframe: WFInvAlecaframeSource };
+  export type WFInventorySource = "None" | { Profile: WFInvProfileSource } | { Alecaframe: WFInvAlecaframeSource } | { File: WFInvFileSource };
   export interface WFInvProfileSource {
     id: string;
   }
   export interface WFInvAlecaframeSource {
+    path: string;
+  }
+  export interface WFInvFileSource {
     path: string;
   }
   export interface LogSettings {
@@ -484,6 +487,7 @@ export namespace TauriTypes {
     max_price?: number;
     min_profit?: number;
     min_sma?: number;
+    is_bulk?: boolean;
     cooldown?: CoolDownInfo;
     [key: string]: any;
   }

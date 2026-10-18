@@ -2,7 +2,7 @@ use sea_orm::sea_query::ValueType;
 use sea_orm::{TryGetError, TryGetable, Value, sea_query};
 use serde::{Deserialize, Serialize};
 
-use crate::{LoggerOptions, critical, info};
+use crate::{LoggerOptions, critical};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default)]
 pub struct Properties {
@@ -188,16 +188,6 @@ impl Properties {
                 if v.is_empty() && self.has_property(*key) {
                     self.set_property_value(*key, serde_json::Value::Null);
                 }
-            } else {
-                // For other types, you can add more checks as needed
-                info(
-                    format!("{}:NullifyZeroedProperties", "Properties"),
-                    format!(
-                        "Property '{}' is of an unsupported type for nullification.",
-                        key
-                    ),
-                    &LoggerOptions::default(),
-                );
             }
         }
     }

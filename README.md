@@ -8,8 +8,8 @@ Releases are Windows only. That's what I run and what the installers are built f
 
 ## Install
 
-1. Go to [Releases](https://github.com/uwu6967/kuantframe/releases). The latest is [v1.6.28.2](https://github.com/uwu6967/kuantframe/releases/tag/v1.6.28.2).
-2. Download `Kuantframe_1.6.28+2_x64-setup.exe` and run it. There's an `.msi` too if you'd rather have that.
+1. Go to [Releases](https://github.com/uwu6967/kuantframe/releases). The latest is [v1.6.28.3](https://github.com/uwu6967/kuantframe/releases/tag/v1.6.28.3).
+2. Download `Kuantframe_1.6.28+3_x64-setup.exe` and run it. There's an `.msi` too if you'd rather have that.
 3. Windows will probably show a SmartScreen warning, because the installer isn't signed. Click "More info", then "Run anyway".
 4. Open Kuantframe from the Start Menu and log in with your warframe.market email and password.
 
@@ -43,7 +43,7 @@ Two things to keep in mind. Keep the official Quantframe closed while Kuantframe
 
 ## What's different from Quantframe
 
-Everything here sits on top of upstream Quantframe's `development` branch (official releases are still v1.6.28), plus the Kuantframe changes below.
+This build follows official Quantframe through v1.6.30, plus two trade fixes that are still open pull requests upstream, plus the Kuantframe changes below.
 
 ### Rebrand
 
@@ -61,7 +61,10 @@ Everything here sits on top of upstream Quantframe's `development` branch (offic
 | **Shared HTTP client** | One `reqwest` client for the Quantframe API, Discord and webhooks instead of a new one per request | [bxn-dev, PR #127](https://github.com/Kenya-DK/quantframe-react/pull/127) |
 | **Catppuccin Mocha theme** | Built-in preset under Appearance → Theme | [NakedTrashPanda](https://github.com/NakedTrashPanda/Quantframe-Catppuccin-Theme) |
 | **Min Buy % of Lowest Sell** | WTB setting that floors your bids at a percentage of the cheapest sell listing. Off by default (`-1`), and floored bids no longer get wiped by the Overpriced check | Asked for by Hit2Skill in [upstream issue #109](https://github.com/Kenya-DK/quantframe-react/issues/109), built here |
-| **Upstream development** | Syndicate trading, minimum sell-profit percent, Warframe profile or AlecaFrame inventory import, order cooldown (off until `ORDER_COOLDOWN_ENABLED` is turned on), and the live-scraper bugfixes from Kenya-DK's unreleased `development` branch | [Kenya-DK/quantframe-react](https://github.com/Kenya-DK/quantframe-react) `development` |
+| **Quantframe 1.6.29 and 1.6.30** | Bulk quantities on stock and the wish list, a plain JSON inventory file, a chart on the Trading Analytics transaction tab, the ban screen actually showing, secrets stripped from API error logs, and trades no longer written twice | [Kenya-DK](https://github.com/Kenya-DK/quantframe-react), [v1.6.29](https://github.com/Kenya-DK/quantframe-react/releases/tag/v1.6.29) and [v1.6.30](https://github.com/Kenya-DK/quantframe-react/releases/tag/v1.6.30) |
+| **Wish list left alone on a sale** | Selling something that is also on your wish list no longer deletes the wish list row. Empty sub-types match items with no sub-type, and Process Trade saves the full price | [Tom-Hartmann, PR #132](https://github.com/Kenya-DK/quantframe-react/pull/132) |
+| **Orders keep their item card** | A live-scraper refetch no longer turns your orders into "Unknown Item" with a blank image | [ponpoko094, PR #130](https://github.com/Kenya-DK/quantframe-react/pull/130) |
+| **Earlier upstream development** | Syndicate trading, minimum sell-profit percent, Warframe profile or AlecaFrame inventory, and order cooldown (off until `ORDER_COOLDOWN_ENABLED` is turned on). These shipped in Quantframe 1.6.29; they were already in Kuantframe 1.6.28.2 | [Kenya-DK](https://github.com/Kenya-DK/quantframe-react) |
 
 ### My own changes
 
@@ -101,7 +104,7 @@ The `.exe` and `.msi` land in `src-tauri\target\release\bundle\nsis\` and `src-t
 
 `pnpm run lint` and `pnpm run build` check the frontend. `cargo test` inside `src-tauri` runs the Rust tests. Pushing a `v*` tag kicks off `.github/workflows/build.yml`, which builds the installers on `windows-latest` and attaches them to a GitHub Release. No signing keys needed. The code compiles on Linux as well and CI checks that on pull requests, but I don't use or test it there.
 
-One quirk: Cargo and npm won't accept a four-part version, so the app reports itself as `1.6.28+2` while the release tag is `v1.6.28.2`. Same build.
+One quirk: Cargo and npm won't accept a four-part version, so the app reports itself as `1.6.28+3` while the release tag is `v1.6.28.3`. Same build.
 
 ## Contact
 
